@@ -15,12 +15,17 @@ GOMOD := $(GOCMD) mod
 AGENT_MAIN := cmd/agent/main.go
 ORCHESTRATOR_MAIN := cmd/orchestrator/main.go
 
+# Загрузка переменных из .env файла, если он существует
+ifneq (,$(wildcard .env))
+    include .env
+endif
+
 # Определение переменных окружения с значениями по умолчанию
-export COMPUTING_POWER ?= 4
-export TIME_ADDITION_MS ?= 1000
-export TIME_SUBTRACTION_MS ?= 1000
-export TIME_MULTIPLICATIONS_MS ?= 2000
-export TIME_DIVISIONS_MS ?= 2000
+export COMPUTING_POWER ?= $(or $(COMPUTING_POWER),4)
+export TIME_ADDITION_MS ?= $(or $(TIME_ADDITION_MS),1000)
+export TIME_SUBTRACTION_MS ?= $(or $(TIME_SUBTRACTION_MS),1000)
+export TIME_MULTIPLICATIONS_MS ?= $(or $(TIME_MULTIPLICATIONS_MS),2000)
+export TIME_DIVISIONS_MS ?= $(or $(TIME_DIVISIONS_MS),2000)
 export ORCHESTRATOR_URL ?= http://localhost:8080
 export PORT ?= 8080
 

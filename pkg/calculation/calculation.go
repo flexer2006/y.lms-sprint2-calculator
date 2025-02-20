@@ -6,7 +6,16 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
+
+// InitLogger initializes the logger for the calculation package
+func InitLogger(l *zap.Logger) {
+	logger = l
+}
 
 func EvaluateExpression(expression string) (float64, error) {
 	if expression == "" {
@@ -127,6 +136,11 @@ func (p *Parser) parsePower() (float64, error) {
 
 func (p *Parser) parseFactor() (float64, error) {
 	if p.pos >= len(p.tokens) {
+		if logger != nil {
+			logger.Error("Unexpected end of expression", 
+				zap.Strings("tokens", p.tokens),
+				zap.Int("position", p.pos))
+		}
 		return 0, errors.New("unexpected end of expression")
 	}
 
@@ -137,27 +151,54 @@ func (p *Parser) parseFactor() (float64, error) {
 	case token == "(":
 		result, err := p.parseExpression()
 		if err != nil {
+			if logger != nil {
+				logger.Error("Failed to parse expression in parentheses",
+					zap.Error(err),
+					zap.Strings("tokens", p.tokens),
+					zap.Int("position", p.pos))
+			}
 			return 0, err
 		}
 		if p.pos >= len(p.tokens) || p.tokens[p.pos] != ")" {
+			if logger != nil {
+				logger.Error("Missing closing parenthesis",
+					zap.Strings("tokens", p.tokens),
+					zap.Int("position", p.pos))
+			}
 			return 0, errors.New("missing closing parenthesis")
 		}
 		p.pos++
 		return result, nil
 	case token == "-":
-
 		factor, err := p.parseFactor()
 		if err != nil {
+			if logger != nil {
+				logger.Error("Failed to parse negative factor",
+					zap.Error(err),
+					zap.Strings("tokens", p.tokens),
+					zap.Int("position", p.pos))
+			}
 			return 0, err
 		}
 		return -factor, nil
 	case isNumber(token):
 		num, err := strconv.ParseFloat(token, 64)
 		if err != nil {
+			if logger != nil {
+				logger.Error("Invalid number format",
+					zap.String("token", token),
+					zap.Error(err))
+			}
 			return 0, fmt.Errorf("invalid number: %s", token)
 		}
 		return num, nil
 	default:
+		if logger != nil {
+			logger.Error("Unexpected token",
+				zap.String("token", token),
+				zap.Strings("tokens", p.tokens),
+				zap.Int("position", p.pos))
+		}
 		return 0, fmt.Errorf("unexpected token: %s", token)
 	}
 }

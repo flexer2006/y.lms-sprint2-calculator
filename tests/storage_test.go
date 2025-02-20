@@ -12,10 +12,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestStorage_SaveExpression(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	tests := []struct {
 		name    string
@@ -63,7 +65,8 @@ func TestStorage_SaveExpression(t *testing.T) {
 }
 
 func TestStorage_GetExpression(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	// Test non-existent expression
 	_, err := store.GetExpression("non-existent")
@@ -83,7 +86,8 @@ func TestStorage_GetExpression(t *testing.T) {
 }
 
 func TestStorage_ListExpressions(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	// Initial list should be empty
 	expressions := store.ListExpressions()
@@ -113,7 +117,8 @@ func TestStorage_ListExpressions(t *testing.T) {
 }
 
 func TestStorage_SaveAndGetTask(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	task := &models.Task{
 		ID:            "task-1",
@@ -140,7 +145,8 @@ func TestStorage_SaveAndGetTask(t *testing.T) {
 }
 
 func TestStorage_UpdateTaskResult(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	// Try to update non-existent task
 	err := store.UpdateTaskResult("non-existent", 42.0)
@@ -168,7 +174,8 @@ func TestStorage_UpdateTaskResult(t *testing.T) {
 }
 
 func TestStorage_GetNextTask(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	// Initially should return error
 	_, err := store.GetNextTask()
@@ -211,7 +218,8 @@ func TestStorage_GetNextTask(t *testing.T) {
 }
 
 func TestStorage_UpdateExpressionStatus(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	err := store.UpdateExpressionStatus("non-existent", models.StatusProgress)
 	assert.Error(t, err)
@@ -233,7 +241,8 @@ func TestStorage_UpdateExpressionStatus(t *testing.T) {
 }
 
 func TestStorage_UpdateExpressionResult(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	err := store.UpdateExpressionResult("non-existent", 42.0)
 	assert.Error(t, err)
@@ -256,7 +265,8 @@ func TestStorage_UpdateExpressionResult(t *testing.T) {
 }
 
 func TestStorage_UpdateExpressionError(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	err := store.UpdateExpressionError("non-existent", "error message")
 	assert.Error(t, err)
@@ -278,7 +288,8 @@ func TestStorage_UpdateExpressionError(t *testing.T) {
 }
 
 func TestStorage_ConcurrentAccess(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 	done := make(chan bool)
 	const goroutines = 10
 
@@ -306,7 +317,8 @@ func TestStorage_ConcurrentAccess(t *testing.T) {
 
 func TestStorage_SaveTask_Validation(t *testing.T) {
 	t.Parallel()
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	tests := []struct {
 		name    string
@@ -382,7 +394,8 @@ func TestStorage_SaveTask_Validation(t *testing.T) {
 }
 
 func TestStorage_TaskQueue_Behavior(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	tasks := []*models.Task{
 		{
@@ -427,7 +440,8 @@ func TestStorage_TaskQueue_Behavior(t *testing.T) {
 }
 
 func TestStorage_ExpressionLifecycle(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	expr := &models.Expression{
 		ID:         "test-lifecycle",
@@ -464,7 +478,8 @@ func TestStorage_ExpressionLifecycle(t *testing.T) {
 }
 
 func TestStorage_ConcurrentTaskProcessing(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 	done := make(chan bool)
 	const workers = 5
 	const tasksPerWorker = 10
@@ -515,7 +530,8 @@ func TestStorage_ConcurrentTaskProcessing(t *testing.T) {
 }
 
 func TestStorage_EdgeCases(t *testing.T) {
-	store := storage.New()
+	logger, _ := zap.NewDevelopment()
+	store := storage.New(logger)
 
 	expr := &models.Expression{
 		ID:         "large-numbers",

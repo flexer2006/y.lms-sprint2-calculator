@@ -4,15 +4,21 @@ param(
     [string]$Command = "run-dev"  # Аргумент командной строки, задающий действие (по умолчанию run-dev)
 )
 
-# Устанавливаем значения по умолчанию для переменных окружения
+# Загружаем переменные из .env файла
+$envFile = ".env"
 $DEFAULT_ENV = @{
-    "COMPUTING_POWER" = "4"
-    "TIME_ADDITION_MS" = "1000"
-    "TIME_SUBTRACTION_MS" = "1000"
-    "TIME_MULTIPLICATIONS_MS" = "2000"
-    "TIME_DIVISIONS_MS" = "2000"
     "ORCHESTRATOR_URL" = "http://localhost:8080"
     "PORT" = "8080"
+}
+
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^([^#][^=]+)=(.*)$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            $DEFAULT_ENV[$key] = $value
+        }
+    }
 }
 
 # Устанавливаем переменные окружения, если они не заданы
