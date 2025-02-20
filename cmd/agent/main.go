@@ -6,43 +6,45 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
+	"github.com/flexer2006/y.lms-sprint2-calculator/internal/worker"
 	"go.uber.org/zap"
 )
 
 func main() {
-
+	// Инициализируем логгер
 	opts := logger.DefaultOptions()
 	opts.LogDir = "logs/agent"
 
 	log, err := logger.New(opts)
 	if err != nil {
-
 		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
-	defer logger.Close()
+	defer log.Sync() // Используем метод Sync() вместо logger.Close()
 
+	// Создаем контекст с отменой
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	log.Info("Starting agent service...")
-
-	if err := initializeAgent(); err != nil {
-		log.Fatal("Failed to initialize agent",
-			zap.Error(err),
-			zap.String("service", "agent"),
-			zap.Time("startup_time", time.Now()),
-		)
+	// Инициализируем конфигурацию агента
+	cfg, err := worker.NewConfig()
+	if err != nil {
+		log.Fatal("Failed to initialize config", zap.Error(err))
 	}
 
+	// Создаем и запускаем агента
+	agent := worker.New(cfg, log)
+	if err := agent.Start(); err != nil {
+		log.Fatal("Failed to start agent", zap.Error(err))
+	}
+
+	log.Info("Agent service started successfully")
+
+	// Ожидаем сигнала завершения
 	<-ctx.Done()
-	log.Info("Shutting down agent service gracefully")
-}
 
-func initializeAgent() error {
-
-	return nil
+	agent.Stop()
+	log.Info("Agent service stopped gracefully")
 }

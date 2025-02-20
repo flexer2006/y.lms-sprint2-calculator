@@ -134,6 +134,19 @@ func (s *Server) handleSubmitTaskResult(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	task, err := s.storage.GetTask(result.ID)
+	if err != nil {
+		s.logger.Error("Failed to get task", zap.Error(err))
+		s.writeError(w, http.StatusInternalServerError, "Failed to process result")
+		return
+	}
+
+	if err := s.storage.UpdateExpressionResult(task.ExpressionID, result.Result); err != nil {
+		s.logger.Error("Failed to update expression result",
+			zap.String("expressionID", task.ExpressionID),
+			zap.Error(err))
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
