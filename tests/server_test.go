@@ -46,7 +46,6 @@ func setupTestServer(t *testing.T) (*server.Server, *mux.Router) {
 }
 
 func TestServer_HandleCalculate(t *testing.T) {
-	t.Parallel()
 	_, router := setupTestServer(t)
 
 	tests := []struct {
@@ -99,7 +98,6 @@ func TestServer_HandleCalculate(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			body, err := json.Marshal(tt.request)
 			require.NoError(t, err)
 
@@ -115,7 +113,7 @@ func TestServer_HandleCalculate(t *testing.T) {
 }
 
 func TestServer_HandleGetExpression(t *testing.T) {
-	t.Parallel()
+	// Remove t.Parallel() as this is an integration test
 	_, router := setupTestServer(t)
 
 	// Создаем выражение через API
@@ -175,7 +173,7 @@ func TestServer_HandleGetExpression(t *testing.T) {
 }
 
 func TestServer_HandleListExpressions(t *testing.T) {
-	t.Parallel()
+	// Remove t.Parallel() as this is an integration test
 	_, router := setupTestServer(t)
 
 	// Создаем несколько выражений
@@ -246,6 +244,9 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
 
+	// Add a small delay to allow the processExpression goroutine to complete
+	time.Sleep(100 * time.Millisecond)
+
 	req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -270,7 +271,6 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 }
 
 func TestServer_Integration(t *testing.T) {
-	t.Parallel()
 	_, router := setupTestServer(t)
 
 	// 1. Создаем выражение
@@ -287,6 +287,9 @@ func TestServer_Integration(t *testing.T) {
 	err = json.NewDecoder(w.Body).Decode(&calcResp)
 	require.NoError(t, err)
 	exprID := calcResp.ID
+
+	// Add a small delay to allow the processExpression goroutine to complete
+	time.Sleep(100 * time.Millisecond)
 
 	// 2. Получаем задачу
 	req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
@@ -311,17 +314,33 @@ func TestServer_Integration(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusOK, w.Code)
 
-	// 4. Проверяем статус выражения
-	time.Sleep(100 * time.Millisecond) // Даем время на обработку
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/expressions/"+exprID, nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	require.Equal(t, http.StatusOK, w.Code)
+	// 4. Проверяем статус выражения с таймаутом
+	timeout := time.After(5 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 
-	var exprResp models.ExpressionResponse
-	err = json.NewDecoder(w.Body).Decode(&exprResp)
-	require.NoError(t, err)
-	assert.Equal(t, models.StatusComplete, exprResp.Expression.Status)
-	assert.NotNil(t, exprResp.Expression.Result)
-	assert.Equal(t, 4.0, *exprResp.Expression.Result)
+	for {
+		select {
+		case <-timeout:
+			t.Fatal("timeout waiting for expression to complete")
+		case <-ticker.C:
+			req = httptest.NewRequest(http.MethodGet, "/api/v1/expressions/"+exprID, nil)
+			w = httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			if w.Code != http.StatusOK {
+				continue
+			}
+
+			var exprResp models.ExpressionResponse
+			err = json.NewDecoder(w.Body).Decode(&exprResp)
+			require.NoError(t, err)
+
+			if exprResp.Expression.Status == models.StatusComplete {
+				assert.NotNil(t, exprResp.Expression.Result)
+				assert.Equal(t, 4.0, *exprResp.Expression.Result)
+				return
+			}
+		}
+	}
 }

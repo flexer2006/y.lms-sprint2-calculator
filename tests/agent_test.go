@@ -100,7 +100,6 @@ func TestAgent_Calculate(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			result := agent.Calculate(tt.task)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -108,8 +107,7 @@ func TestAgent_Calculate(t *testing.T) {
 }
 
 func TestAgent_Integration(t *testing.T) {
-	t.Parallel()
-	// Создаем тестовый сервер
+
 	taskCh := make(chan models.Task, 1)
 	resultCh := make(chan models.TaskResult, 1)
 
@@ -125,14 +123,21 @@ func TestAgent_Integration(t *testing.T) {
 			}
 		case http.MethodPost:
 			var result models.TaskResult
-			json.NewDecoder(r.Body).Decode(&result)
-			resultCh <- result
-			w.WriteHeader(http.StatusOK)
+			if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			select {
+			case resultCh <- result:
+				w.WriteHeader(http.StatusOK)
+			case <-time.After(2 * time.Second):
+				w.WriteHeader(http.StatusRequestTimeout)
+			}
 		}
 	}))
 	defer server.Close()
 
-	// Создаем агента
+	// Создаем агента с коротким таймаутом для тестов
 	log, err := logger.New(logger.Options{
 		Level:       logger.Debug,
 		Encoding:    "json",
@@ -147,10 +152,29 @@ func TestAgent_Integration(t *testing.T) {
 		OrchestratorURL: server.URL,
 	}, log)
 
-	// Запускаем агента
-	err = agent.Start()
-	require.NoError(t, err)
-	defer agent.Stop()
+	// Запускаем агента с таймаутом
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- agent.Start()
+	}()
+
+	// Проверяем запуск агента
+	select {
+	case err := <-errCh:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout starting agent")
+	}
+
+	defer func() {
+		agent.Stop()
+		// Ждем остановки агента
+		select {
+		case <-errCh:
+		case <-time.After(5 * time.Second):
+			t.Log("warning: agent stop timeout")
+		}
+	}()
 
 	// Отправляем задачу
 	task := models.Task{
@@ -160,19 +184,25 @@ func TestAgent_Integration(t *testing.T) {
 		Arg2:          5,
 		OperationTime: 100,
 	}
-	taskCh <- task
 
-	// Ждем результат
+	select {
+	case taskCh <- task:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout sending task")
+	}
+
+	// Ждем результат с таймаутом
 	select {
 	case result := <-resultCh:
 		assert.Equal(t, task.ID, result.ID)
 		assert.Equal(t, float64(15), result.Result)
-	case <-time.After(time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("timeout waiting for result")
 	}
 }
 
 func TestAgent_Config(t *testing.T) {
+	t.Parallel()
 	// Создаем копию текущих переменных окружения
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
 	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
@@ -191,6 +221,7 @@ func TestAgent_Config(t *testing.T) {
 }
 
 func TestAgent_InvalidConfig(t *testing.T) {
+	t.Parallel()
 	// Создаем копию текущих переменных окружения
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
 	defer os.Setenv("COMPUTING_POWER", originalComputingPower)

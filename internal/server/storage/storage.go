@@ -103,8 +103,8 @@ func (s *Storage) GetNextTask() (*models.Task, error) {
 	// Получаем первую задачу из очереди
 	task := s.taskQueue[0]
 
-	// Помечаем задачу как "взятая" (например, добавляем флаг или изменяем статус)
-	// task.Taken = true // Пример, если у задачи есть поле Taken
+	// Удаляем задачу из очереди
+	s.taskQueue = s.taskQueue[1:]
 
 	// Возвращаем копию задачи
 	return &task, nil

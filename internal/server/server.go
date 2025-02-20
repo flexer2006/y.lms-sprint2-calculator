@@ -176,6 +176,18 @@ func (s *Server) processExpression(expr *models.Expression) {
 	}
 
 	tasks := s.createTasks(expr.ID, tokens)
+	if len(tasks) == 0 {
+		s.logger.Error("No valid tasks created",
+			zap.String("id", expr.ID),
+			zap.String("expression", expr.Expression))
+		if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create valid tasks"); updateErr != nil {
+			s.logger.Error("Failed to update expression error",
+				zap.String("id", expr.ID),
+				zap.Error(updateErr))
+		}
+		return
+	}
+
 	for _, task := range tasks {
 		if err := s.storage.SaveTask(task); err != nil {
 			s.logger.Error("Failed to save task",

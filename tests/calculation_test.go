@@ -10,13 +10,15 @@ import (
 )
 
 func TestCalculator(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		expr     string
 		expected float64
 		wantErr  bool
 	}{
-		// Базовые операции
+
 		{
 			name:     "simple addition",
 			expr:     "2 + 2",
@@ -257,8 +259,6 @@ func TestCalculator(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel() // Добавляем параллельное выполнение
-
 			result, err := calculation.EvaluateExpression(tt.expr)
 
 			if tt.wantErr {

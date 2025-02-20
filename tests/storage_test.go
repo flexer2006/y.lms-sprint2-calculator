@@ -15,7 +15,6 @@ import (
 )
 
 func TestStorage_SaveExpression(t *testing.T) {
-	t.Parallel()
 	store := storage.New()
 
 	tests := []struct {
@@ -45,7 +44,6 @@ func TestStorage_SaveExpression(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			err := store.SaveExpression(tt.expr)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -65,7 +63,6 @@ func TestStorage_SaveExpression(t *testing.T) {
 }
 
 func TestStorage_GetExpression(t *testing.T) {
-	t.Parallel()
 	store := storage.New()
 
 	// Test non-existent expression
