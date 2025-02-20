@@ -300,3 +300,8 @@ func (s *Server) writeError(w http.ResponseWriter, status int, message string) {
 		s.logger.Error("Failed to write error response", zap.Error(err))
 	}
 }
+
+// Добавляем метод для получения HTTP handler
+func (s *Server) GetHandler() http.Handler {
+	return s.server.Handler
+}

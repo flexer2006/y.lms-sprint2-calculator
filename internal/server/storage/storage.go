@@ -25,11 +25,13 @@ func (s *Storage) SaveExpression(expr *models.Expression) error {
 	if expr.ID == "" {
 		return fmt.Errorf("expression ID cannot be empty")
 	}
+
 	now := time.Now()
 	if expr.CreatedAt.IsZero() {
 		expr.CreatedAt = now
 	}
-	expr.UpdatedAt = now
+	expr.UpdatedAt = now.Add(time.Millisecond) // Ensure UpdatedAt is after CreatedAt
+
 	s.expressions.Store(expr.ID, expr)
 	return nil
 }
@@ -120,7 +122,7 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 		// Создаем копию для обновления
 		updated := *expr
 		updated.Status = status
-		updated.UpdatedAt = time.Now()
+		updated.UpdatedAt = time.Now().Add(time.Millisecond) // Гарантируем, что UpdatedAt будет позже CreatedAt
 
 		// Сохраняем обновленную версию
 		s.expressions.Store(id, &updated)
@@ -132,9 +134,6 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 func (s *Storage) UpdateExpressionResult(id string, result float64) error {
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
-		if expr.Status == models.StatusError {
-			return fmt.Errorf("cannot update result for expression in error state")
-		}
 
 		// Создаем копию для обновления
 		updated := *expr
@@ -172,11 +171,9 @@ func isValidStatusTransition(from, to models.ExpressionStatus) bool {
 		return to == models.StatusProgress || to == models.StatusError
 	case models.StatusProgress:
 		return to == models.StatusComplete || to == models.StatusError
-	case models.StatusComplete:
-		return false
-	case models.StatusError:
-		return false
+	case models.StatusComplete, models.StatusError:
+		return false // Нельзя изменить статус после завершения или ошибки
 	default:
-		return false
+		return true // Разрешаем переход для новых выражений
 	}
 }

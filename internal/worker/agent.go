@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 	"go.uber.org/zap"
@@ -16,7 +17,7 @@ import (
 
 // Agent представляет собой агента-вычислителя
 type Agent struct {
-	config     *Config
+	config     *configs.WorkerConfig
 	logger     *logger.Logger
 	httpClient *http.Client
 	wg         sync.WaitGroup
@@ -25,7 +26,7 @@ type Agent struct {
 }
 
 // New создает нового агента
-func New(cfg *Config, log *logger.Logger) *Agent {
+func New(cfg *configs.WorkerConfig, log *logger.Logger) *Agent {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Agent{
 		config: cfg,

@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/worker"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ func main() {
 	defer stop()
 
 	// Инициализируем конфигурацию агента
-	cfg, err := worker.NewConfig()
+	cfg, err := configs.NewWorkerConfig()
 	if err != nil {
 		log.Fatal("Failed to initialize config", zap.Error(err))
 	}

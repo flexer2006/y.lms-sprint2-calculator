@@ -7,14 +7,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/worker"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAgent_Calculate(t *testing.T) {
+	t.Parallel()
 	log, err := logger.New(logger.Options{
 		Level:       logger.Debug,
 		Encoding:    "json",
@@ -24,7 +27,7 @@ func TestAgent_Calculate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	agent := worker.New(&worker.Config{ComputingPower: 1}, log)
+	agent := worker.New(&configs.WorkerConfig{ComputingPower: 1}, log)
 
 	tests := []struct {
 		name     string
@@ -94,7 +97,9 @@ func TestAgent_Calculate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := agent.Calculate(tt.task)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -102,6 +107,7 @@ func TestAgent_Calculate(t *testing.T) {
 }
 
 func TestAgent_Integration(t *testing.T) {
+	t.Parallel()
 	// Создаем тестовый сервер
 	taskCh := make(chan models.Task, 1)
 	resultCh := make(chan models.TaskResult, 1)
@@ -135,7 +141,7 @@ func TestAgent_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	agent := worker.New(&worker.Config{
+	agent := worker.New(&configs.WorkerConfig{
 		ComputingPower:  1,
 		OrchestratorURL: server.URL,
 	}, log)
@@ -166,10 +172,11 @@ func TestAgent_Integration(t *testing.T) {
 }
 
 func TestAgent_Config(t *testing.T) {
+	t.Parallel()
 	t.Setenv("COMPUTING_POWER", "3")
 	t.Setenv("ORCHESTRATOR_URL", "http://test:8080")
 
-	cfg, err := worker.NewConfig()
+	cfg, err := configs.NewWorkerConfig()
 	require.NoError(t, err)
 
 	assert.Equal(t, 3, cfg.ComputingPower)
@@ -177,14 +184,15 @@ func TestAgent_Config(t *testing.T) {
 }
 
 func TestAgent_InvalidConfig(t *testing.T) {
+	t.Parallel()
 	t.Setenv("COMPUTING_POWER", "invalid")
 
-	_, err := worker.NewConfig()
+	_, err := configs.NewWorkerConfig()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid COMPUTING_POWER value")
 
 	t.Setenv("COMPUTING_POWER", "0")
-	_, err = worker.NewConfig()
+	_, err = configs.NewWorkerConfig()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "COMPUTING_POWER must be greater than 0")
 }

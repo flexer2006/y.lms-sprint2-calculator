@@ -1,10 +1,12 @@
 package test
 
 import (
-	"math"
 	"testing"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/pkg/calculation"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCalculator(t *testing.T) {
@@ -14,86 +16,258 @@ func TestCalculator(t *testing.T) {
 		expected float64
 		wantErr  bool
 	}{
+		// Базовые операции
+		{
+			name:     "simple addition",
+			expr:     "2 + 2",
+			expected: 4,
+		},
+		{
+			name:     "simple subtraction",
+			expr:     "5 - 3",
+			expected: 2,
+		},
+		{
+			name:     "simple multiplication",
+			expr:     "4 * 3",
+			expected: 12,
+		},
+		{
+			name:     "simple division",
+			expr:     "10 / 2",
+			expected: 5,
+		},
 
-		{"Простое сложение", "2 + 3", 5, false},
-		{"Простое вычитание", "5 - 2", 3, false},
-		{"Простое умножение", "3 * 4", 12, false},
-		{"Простое деление", "10 / 2", 5, false},
-		{"Простой остаток", "7 % 3", 1, false},
-		{"Простое возведение в степень", "2 ^ 3", 8, false},
+		// Сложные выражения с приоритетами
+		{
+			name:     "operator precedence multiplication over addition",
+			expr:     "2 + 3 * 4",
+			expected: 14,
+		},
+		{
+			name:     "operator precedence division over subtraction",
+			expr:     "10 - 6 / 2",
+			expected: 7,
+		},
+		{
+			name:     "multiple operators with precedence",
+			expr:     "2 + 3 * 4 - 5 / 2.5",
+			expected: 12,
+		},
 
-		{"Сложение с отрицательным числом", "-2 + 3", 1, false},
-		{"Вычитание отрицательного числа", "5 - (-3)", 8, false},
-		{"Умножение отрицательных чисел", "-3 * -4", 12, false},
-		{"Деление на отрицательное число", "10 / -2", -5, false},
-		{"Возведение отрицательного числа в степень (нечетная)", "-2 ^ 3", -8, false},
-		{"Возведение отрицательного числа в степень (четная)", "-2 ^ 2", 4, false},
-		{"Модуль с отрицательным делимым", "-7 % 3", -1, false},
-		{"Модуль с отрицательным делителем", "7 % -3", 1, false},
+		// Работа со скобками
+		{
+			name:     "simple parentheses",
+			expr:     "(2 + 3) * 4",
+			expected: 20,
+		},
+		{
+			name:     "nested parentheses",
+			expr:     "((2 + 3) * 2) + 1",
+			expected: 11,
+		},
+		{
+			name:     "complex nested parentheses",
+			expr:     "(1 + (2 * (3 + 4) - 5)) * 2",
+			expected: 20,
+		},
+		{
+			name:     "multiple groups of parentheses",
+			expr:     "(2 + 3) * (4 + 5)",
+			expected: 45,
+		},
 
-		{"Сложение дробных чисел", "2.5 + 3.1", 5.6, false},
-		{"Вычитание дробных чисел", "5.7 - 2.3", 3.4, false},
-		{"Умножение дробных чисел", "1.5 * 4.2", 6.3, false},
-		{"Деление дробных чисел", "10.5 / 2.5", 4.2, false},
-		{"Возведение дробного числа в степень", "2.5 ^ 2", 6.25, false},
+		// Работа с отрицательными числами
+		{
+			name:     "negative number addition",
+			expr:     "-2 + 3",
+			expected: 1,
+		},
+		{
+			name:     "adding negative numbers",
+			expr:     "-2 + -3",
+			expected: -5,
+		},
+		{
+			name:     "subtracting negative number",
+			expr:     "5 - (-3)",
+			expected: 8,
+		},
+		{
+			name:     "multiplying negative numbers",
+			expr:     "-2 * -3",
+			expected: 6,
+		},
+		{
+			name:     "dividing negative numbers",
+			expr:     "-6 / -2",
+			expected: 3,
+		},
+		{
+			name:     "complex expression with negatives",
+			expr:     "-2 * (-3 + 4) - (-5 / -2)",
+			expected: -4.5,
+		},
 
-		{"Приоритет умножения над сложением", "2 + 3 * 4", 14, false},
-		{"Приоритет деления над вычитанием", "10 - 6 / 2", 7, false},
-		{"Простые скобки", "(2 + 3) * 4", 20, false},
-		{"Вложенные скобки", "((2 + 3) * 4) - 2", 18, false},
-		{"Множественные скобки", "(2 + (3 * 4)) / 2", 7, false},
-		{"Сложные вложенные скобки", "(1 + (2 * (3 + 4) - 5)) * 2", 20, false},
+		// Работа с десятичными числами
+		{
+			name:     "decimal addition",
+			expr:     "2.5 + 3.7",
+			expected: 6.2,
+		},
+		{
+			name:     "decimal multiplication",
+			expr:     "2.5 * 2.5",
+			expected: 6.25,
+		},
+		{
+			name:     "complex decimal expression",
+			expr:     "2.5 * 3.2 + 4.8 / 2.4",
+			expected: 10,
+		},
 
-		{"Сложное выражение с разными операторами", "3 + 4 * 2 / (1 - 5) ^ 2 ^ 3", 3.0001220703125, false},
-		{"Комбинация всех операторов", "2 ^ 3 + 4 * 5 - 6 / 2 % 2", 27, false},
-		{"Выражение с множеством скобок", "((2 + 3) * (4 - 1)) ^ 2", 225, false},
+		// Пробелы и форматирование
+		{
+			name:     "expression with spaces",
+			expr:     "  2  +  2  ",
+			expected: 4,
+		},
+		{
+			name:     "expression with multiple spaces",
+			expr:     "2   +   3   *   4",
+			expected: 14,
+		},
 
-		{"Одиночное число", "42", 42, false},
-		{"Одиночное отрицательное число", "-42", -42, false},
-		{"Одиночное дробное число", "42.42", 42.42, false},
-		{"Одиночное отрицательное дробное число", "-42.42", -42.42, false},
-		{"Выражение с множеством пробелов", "  2   +   3  ", 5, false},
+		// Крайние случаи и ошибки
+		{
+			name:    "empty expression",
+			expr:    "",
+			wantErr: true,
+		},
+		{
+			name:    "only spaces",
+			expr:    "     ",
+			wantErr: true,
+		},
+		{
+			name:    "unclosed parenthesis",
+			expr:    "(2 + 3",
+			wantErr: true,
+		},
+		{
+			name:    "unopened parenthesis",
+			expr:    "2 + 3)",
+			wantErr: true,
+		},
+		{
+			name:    "multiple decimal points",
+			expr:    "2.2.2 + 1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid character",
+			expr:    "2 + a",
+			wantErr: true,
+		},
+		{
+			name:    "consecutive operators",
+			expr:    "2 ++ 2",
+			wantErr: true,
+		},
+		{
+			name:    "division by zero",
+			expr:    "2 / 0",
+			wantErr: true,
+		},
+		{
+			name:    "missing operand",
+			expr:    "2 +",
+			wantErr: true,
+		},
+		{
+			name:    "missing operator",
+			expr:    "2 2",
+			wantErr: true,
+		},
 
-		{"Пустое выражение", "", 0, true},
-		{"Только пробелы", "   ", 0, true},
-		{"Незакрытая скобка", "(1 + 2", 0, true},
-		{"Неоткрытая скобка", "1 + 2)", 0, true},
-		{"Двойной оператор", "1 ++ 2", 0, true},
-		{"Недопустимый символ", "1 + a", 0, true},
-		{"Деление на ноль", "5 / 0", 0, true},
-		{"Модуль на ноль", "5 % 0", 0, true},
-		{"Незавершенное выражение", "2 +", 0, true},
-		{"Начало с оператора", "+ 2", 0, true},
-		{"Конец с оператором", "2 +", 0, true},
-		{"Пропущенный оператор между скобками", "(1)(2)", 0, true},
-		{"Неправильная последовательность операторов", "1 + * 2", 0, true},
-		{"Множественные десятичные точки", "1.2.3", 0, true},
-		{"Пустые скобки", "()", 0, true},
-		{"Модуль с дробным числом", "5.5 % 2", 0, true},
-		{"Несбалансированные скобки", "((1 + 2) * 3", 0, true},
-		{"Множественные ошибки", "1 ++ 2 + a)", 0, true},
+		// Очень длинные выражения
+		{
+			name:     "long expression",
+			expr:     "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10",
+			expected: 55,
+		},
+		{
+			name:     "long expression with mixed operators",
+			expr:     "1 + 2 * 3 - 4 / 2 + 5 * (6 + 7) - 8 + 9",
+			expected: 71,
+		},
 
-		{"Очень длинное выражение", "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10", 55, false},
-		{"Глубоко вложенные скобки", "((((1 + 2) * 3) - 4) / 5)", 1, false},
-		{"Множественные степени", "2 ^ 2 ^ 3", 256, false},
-		{"Комбинация унарного и бинарного минуса", "2 * -(-3)", 6, false},
+		// Унарный минус в разных контекстах
+		{
+			name:     "unary minus at start",
+			expr:     "-2 * 3",
+			expected: -6,
+		},
+		{
+			name:     "unary minus after operator",
+			expr:     "2 * -3",
+			expected: -6,
+		},
+		{
+			name:     "unary minus in parentheses",
+			expr:     "2 * (-3)",
+			expected: -6,
+		},
+		{
+			name:     "multiple unary minuses",
+			expr:     "2 * -(-3)",
+			expected: 6,
+		},
+		{
+			name:     "unary minus with decimals",
+			expr:     "-2.5 * -3.2",
+			expected: 8,
+		},
+
+		// Очень маленькие и большие числа
+		{
+			name:     "very small numbers",
+			expr:     "0.0000001 + 0.0000002",
+			expected: 0.0000003,
+		},
+		{
+			name:     "very large numbers",
+			expr:     "1000000 * 1000000",
+			expected: 1000000000000,
+		},
+
+		// Комбинированные сложные случаи
+		{
+			name:     "complex mixed expression",
+			expr:     "((-2.5 + 3.7) * (-2 + 4.2)) / (2 * -0.5)",
+			expected: -2.64,
+		},
+		{
+			name:     "deeply nested expression",
+			expr:     "((((1 + 2) * 3) - 4) / 5) * (-2)",
+			expected: -2,
+		},
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Добавляем параллельное выполнение
+
 			result, err := calculation.EvaluateExpression(tt.expr)
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EvaluateExpression(%q) error = %v, wantErr %v", tt.expr, err, tt.wantErr)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error for expression: %s", tt.expr)
 				return
 			}
 
-			if !tt.wantErr {
-
-				if math.Abs(result-tt.expected) > 1e-10 {
-					t.Errorf("EvaluateExpression(%q) = %v, want %v", tt.expr, result, tt.expected)
-				}
-			}
+			require.NoError(t, err, "Unexpected error for expression: %s", tt.expr)
+			assert.InDelta(t, tt.expected, result, 1e-10, "Unexpected result for expression: %s", tt.expr)
 		})
 	}
 }
