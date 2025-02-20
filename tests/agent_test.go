@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -172,9 +173,15 @@ func TestAgent_Integration(t *testing.T) {
 }
 
 func TestAgent_Config(t *testing.T) {
-	t.Parallel()
-	t.Setenv("COMPUTING_POWER", "3")
-	t.Setenv("ORCHESTRATOR_URL", "http://test:8080")
+	// Создаем копию текущих переменных окружения
+	originalComputingPower := os.Getenv("COMPUTING_POWER")
+	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
+	defer os.Setenv("COMPUTING_POWER", originalComputingPower)
+	defer os.Setenv("ORCHESTRATOR_URL", originalOrchestratorURL)
+
+	// Устанавливаем переменные окружения для теста
+	os.Setenv("COMPUTING_POWER", "3")
+	os.Setenv("ORCHESTRATOR_URL", "http://test:8080")
 
 	cfg, err := configs.NewWorkerConfig()
 	require.NoError(t, err)
@@ -184,14 +191,18 @@ func TestAgent_Config(t *testing.T) {
 }
 
 func TestAgent_InvalidConfig(t *testing.T) {
-	t.Parallel()
-	t.Setenv("COMPUTING_POWER", "invalid")
+	// Создаем копию текущих переменных окружения
+	originalComputingPower := os.Getenv("COMPUTING_POWER")
+	defer os.Setenv("COMPUTING_POWER", originalComputingPower)
 
+	// Тест с некорректным значением
+	os.Setenv("COMPUTING_POWER", "invalid")
 	_, err := configs.NewWorkerConfig()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid COMPUTING_POWER value")
 
-	t.Setenv("COMPUTING_POWER", "0")
+	// Тест с нулевым значением
+	os.Setenv("COMPUTING_POWER", "0")
 	_, err = configs.NewWorkerConfig()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "COMPUTING_POWER must be greater than 0")

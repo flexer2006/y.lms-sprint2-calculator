@@ -166,7 +166,12 @@ func (s *Server) processExpression(expr *models.Expression) {
 			zap.String("id", expr.ID),
 			zap.String("expression", expr.Expression),
 			zap.Error(err))
-		s.storage.UpdateExpressionError(expr.ID, err.Error())
+
+		if updateErr := s.storage.UpdateExpressionError(expr.ID, err.Error()); updateErr != nil {
+			s.logger.Error("Failed to update expression error",
+				zap.String("id", expr.ID),
+				zap.Error(updateErr))
+		}
 		return
 	}
 
@@ -177,7 +182,11 @@ func (s *Server) processExpression(expr *models.Expression) {
 				zap.String("expressionID", expr.ID),
 				zap.String("taskID", task.ID),
 				zap.Error(err))
-			s.storage.UpdateExpressionError(expr.ID, "Failed to create tasks")
+			if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create tasks"); updateErr != nil {
+				s.logger.Error("Failed to update expression error",
+					zap.String("id", expr.ID),
+					zap.Error(updateErr))
+			}
 			return
 		}
 	}
