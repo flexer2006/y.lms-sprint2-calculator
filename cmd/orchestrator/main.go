@@ -1,45 +1,48 @@
 package main
 
 import (
-	"net/http"
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
-
-	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func main() {
-	logger.Info("Starting Orchestrator...")
 
-	r := mux.NewRouter()
+	opts := logger.DefaultOptions()
+	opts.LogDir = "logs/orchestrator"
 
-	r.HandleFunc("/api/v1/calculate", calculateHandler).Methods("POST")
-	r.HandleFunc("/api/v1/expressions", listExpressionsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/expressions/{id}", getExpressionHandler).Methods("GET")
-	r.HandleFunc("/internal/task", getTaskHandler).Methods("GET")
-	r.HandleFunc("/internal/task", postTaskResultHandler).Methods("POST")
+	log, err := logger.New(opts)
+	if err != nil {
 
-	http.Handle("/", r)
-	logger.Info("Orchestrator is running on port 8080")
-	http.ListenAndServe(":8080", nil)
+		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Close()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	log.Info("Starting orchestrator service...")
+
+	if err := initializeOrchestrator(); err != nil {
+		log.Fatal("Failed to initialize orchestrator",
+			zap.Error(err),
+			zap.String("service", "orchestrator"),
+			zap.Time("startup_time", time.Now()),
+		)
+	}
+
+	<-ctx.Done()
+	log.Info("Shutting down orchestrator service gracefully")
 }
 
-func calculateHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for calculating expressions
-}
+func initializeOrchestrator() error {
 
-func listExpressionsHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for listing expressions
-}
-
-func getExpressionHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for getting a specific expression
-}
-
-func getTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for getting a task
-}
-
-func postTaskResultHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for posting task results
+	return nil
 }
