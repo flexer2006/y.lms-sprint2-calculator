@@ -3,6 +3,29 @@ AGENT_BINARY := agent
 ORCHESTRATOR_BINARY := orchestrator
 BUILD_DIR := build
 
+# Detect OS and architecture
+ifeq ($(OS),Windows_NT)
+    BINARY_SUFFIX := .exe
+    DETECTED_OS := windows
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        DETECTED_OS := linux
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        DETECTED_OS := macos
+    endif
+    BINARY_SUFFIX :=
+endif
+
+ifeq ($(shell uname -m),x86_64)
+    DETECTED_ARCH := amd64
+else ifeq ($(shell uname -m),aarch64)
+    DETECTED_ARCH := arm64
+else
+    DETECTED_ARCH := amd64
+endif
+
 # Definition of Go commands
 GOCMD := go
 GOBUILD := $(GOCMD) build
@@ -69,23 +92,13 @@ check-deps:
 	$(GOCMD) mod tidy
 	$(GOCMD) mod verify
 
-# Build binaries
+# Build binaries for current platform
 build: deps $(BUILD_DIR)
-	# Linux builds
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-linux-amd64 $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-linux-amd64 $(ORCHESTRATOR_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-linux-arm64 $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-linux-arm64 $(ORCHESTRATOR_MAIN)
-	# Windows builds
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-windows-amd64.exe $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-windows-amd64.exe $(ORCHESTRATOR_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-windows-arm64.exe $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-windows-arm64.exe $(ORCHESTRATOR_MAIN)
-	# macOS builds
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-macos-amd64 $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-macos-amd64 $(ORCHESTRATOR_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-macos-arm64 $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-macos-arm64 $(ORCHESTRATOR_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-$(DETECTED_OS)-$(DETECTED_ARCH)$(BINARY_SUFFIX) $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-$(DETECTED_OS)-$(DETECTED_ARCH)$(BINARY_SUFFIX) $(ORCHESTRATOR_MAIN)
+	# Create symlinks or copies for generic names
+	cd $(BUILD_DIR) && cp $(AGENT_BINARY)-$(DETECTED_OS)-$(DETECTED_ARCH)$(BINARY_SUFFIX) $(AGENT_BINARY)$(BINARY_SUFFIX)
+	cd $(BUILD_DIR) && cp $(ORCHESTRATOR_BINARY)-$(DETECTED_OS)-$(DETECTED_ARCH)$(BINARY_SUFFIX) $(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX)
 
 # Clean build artifacts
 clean:
@@ -123,8 +136,8 @@ endef
 run: build
 	@echo "Starting services..."
 	$(print_env)
-	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
-	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
+	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/orchestrator.pid
+	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/agent.pid
 
 # Run in development mode with reduced delays
 run-dev: export COMPUTING_POWER=2
@@ -135,16 +148,16 @@ run-dev: export TIME_DIVISIONS_MS=200
 run-dev: build
 	@echo "Starting services in development mode..."
 	$(print_env)
-	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
-	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
+	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/orchestrator.pid
+	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/agent.pid
 
 # Run in production mode with increased power
 run-prod: export COMPUTING_POWER=8
 run-prod: build
 	@echo "Starting services in production mode..."
 	$(print_env)
-	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
-	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
+	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/orchestrator.pid
+	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/agent.pid
 
 # Stop services
 stop:
@@ -161,19 +174,19 @@ stop:
 run-agent: build
 	@echo "Starting agent..."
 	$(print_env)
-	@$(BUILD_DIR)/$(AGENT_BINARY)
+	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX)
 
 # Run only the orchestrator
 run-orchestrator: build
 	@echo "Starting orchestrator..."
 	@echo "Environment variables:"
 	@echo "  PORT: $(PORT)"
-	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)
+	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX)
 
 # Build and run with race detection
 run-race: clean
-	$(GOBUILD) -race -o $(BUILD_DIR)/$(AGENT_BINARY) $(AGENT_MAIN)
-	$(GOBUILD) -race -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY) $(ORCHESTRATOR_MAIN)
+	$(GOBUILD) -race -o $(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) $(AGENT_MAIN)
+	$(GOBUILD) -race -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) $(ORCHESTRATOR_MAIN)
 	@echo "Starting services with race detection..."
-	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
-	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
+	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/orchestrator.pid
+	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/agent.pid
