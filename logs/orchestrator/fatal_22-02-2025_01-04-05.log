@@ -1,1 +1,0 @@
-{"level":"fatal","timestamp":"22-02-2025 01:04:05","message":"Failed to start server","error":"listen tcp :8080: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted."}
