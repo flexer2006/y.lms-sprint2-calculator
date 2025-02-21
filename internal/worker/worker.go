@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"go.uber.org/zap"
 )
 
@@ -11,19 +12,19 @@ import (
 func (a *Agent) worker(id int) {
 	defer a.wg.Done()
 
-	a.logger.Info("Starting worker", zap.Int("worker_id", id))
+	a.logger.Info(common.LogWorkerStarting, zap.Int(common.FieldWorkerID, id))
 
 	for {
 		select {
 		case <-a.ctx.Done():
-			a.logger.Info("Worker stopped", zap.Int("worker_id", id))
+			a.logger.Info(common.LogWorkerStopped, zap.Int(common.FieldWorkerID, id))
 			return
 		default:
 			if err := a.processTask(id); err != nil {
-				a.logger.Error("Failed to process task",
-					zap.Int("worker_id", id),
+				a.logger.Error(common.LogFailedProcessTask,
+					zap.Int(common.FieldWorkerID, id),
 					zap.Error(err))
-				time.Sleep(time.Second) // Небольшая задержка перед следующей попыткой
+				time.Sleep(time.Second)
 			}
 		}
 	}
@@ -34,7 +35,7 @@ func (a *Agent) processTask(workerID int) error {
 	// Получаем задачу от оркестратора
 	task, err := a.getTask()
 	if err != nil {
-		return fmt.Errorf("failed to get task: %w", err)
+		return fmt.Errorf(common.ErrFormatWithWrap, common.LogFailedGetTask, err)
 	}
 
 	// Если задач нет, ждем немного
@@ -43,10 +44,10 @@ func (a *Agent) processTask(workerID int) error {
 		return nil
 	}
 
-	a.logger.Info("Processing task",
-		zap.Int("worker_id", workerID),
-		zap.String("task_id", task.ID),
-		zap.String("operation", task.Operation))
+	a.logger.Info(common.LogProcessingTask,
+		zap.Int(common.FieldWorkerID, workerID),
+		zap.String(common.FieldTaskID, task.ID),
+		zap.String(common.FieldOperation, task.Operation))
 
 	// Имитируем время выполнения операции
 	time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
@@ -56,7 +57,7 @@ func (a *Agent) processTask(workerID int) error {
 
 	// Отправляем результат
 	if err := a.sendResult(task.ID, result); err != nil {
-		return fmt.Errorf("failed to send result: %w", err)
+		return fmt.Errorf(common.ErrFormatWithWrap, common.LogFailedSendResult, err)
 	}
 
 	return nil

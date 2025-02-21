@@ -31,9 +31,10 @@ func TestAgent_Calculate(t *testing.T) {
 	agent := worker.New(&configs.WorkerConfig{ComputingPower: 1}, log)
 
 	tests := []struct {
-		name     string
-		task     *models.Task
-		expected float64
+		name        string
+		task        *models.Task
+		expected    float64
+		expectError bool
 	}{
 		{
 			name: "Addition",
@@ -43,7 +44,8 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      5,
 			},
-			expected: 15,
+			expected:    15,
+			expectError: false,
 		},
 		{
 			name: "Subtraction",
@@ -53,7 +55,8 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      5,
 			},
-			expected: 5,
+			expected:    5,
+			expectError: false,
 		},
 		{
 			name: "Multiplication",
@@ -63,7 +66,8 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      5,
 			},
-			expected: 50,
+			expected:    50,
+			expectError: false,
 		},
 		{
 			name: "Division",
@@ -73,7 +77,8 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      5,
 			},
-			expected: 2,
+			expected:    2,
+			expectError: false,
 		},
 		{
 			name: "Division by zero",
@@ -83,7 +88,7 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      0,
 			},
-			expected: 0,
+			expectError: true,
 		},
 		{
 			name: "Unknown operation",
@@ -93,15 +98,19 @@ func TestAgent_Calculate(t *testing.T) {
 				Arg1:      10,
 				Arg2:      5,
 			},
-			expected: 0,
+			expectError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := agent.Calculate(tt.task)
-			assert.Equal(t, tt.expected, result)
+			if tt.expectError {
+				assert.Panics(t, func() { agent.Calculate(tt.task) }, "Expected panic but got none")
+			} else {
+				result := agent.Calculate(tt.task)
+				assert.Equal(t, tt.expected, result)
+			}
 		})
 	}
 }
@@ -117,7 +126,10 @@ func TestAgent_Integration(t *testing.T) {
 			select {
 			case task := <-taskCh:
 				resp := models.TaskResponse{Task: task}
-				json.NewEncoder(w).Encode(resp)
+				if err := json.NewEncoder(w).Encode(resp); err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 			default:
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -206,12 +218,16 @@ func TestAgent_Config(t *testing.T) {
 	// Создаем копию текущих переменных окружения
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
 	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
-	defer os.Setenv("COMPUTING_POWER", originalComputingPower)
-	defer os.Setenv("ORCHESTRATOR_URL", originalOrchestratorURL)
+
+	// Ensure environment variables are restored after test
+	defer func() {
+		_ = os.Setenv("COMPUTING_POWER", originalComputingPower)
+		_ = os.Setenv("ORCHESTRATOR_URL", originalOrchestratorURL)
+	}()
 
 	// Устанавливаем переменные окружения для теста
-	os.Setenv("COMPUTING_POWER", "3")
-	os.Setenv("ORCHESTRATOR_URL", "http://test:8080")
+	require.NoError(t, os.Setenv("COMPUTING_POWER", "3"))
+	require.NoError(t, os.Setenv("ORCHESTRATOR_URL", "http://test:8080"))
 
 	cfg, err := configs.NewWorkerConfig()
 	require.NoError(t, err)
@@ -224,17 +240,35 @@ func TestAgent_InvalidConfig(t *testing.T) {
 	t.Parallel()
 	// Создаем копию текущих переменных окружения
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
-	defer os.Setenv("COMPUTING_POWER", originalComputingPower)
+	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
+	defer func() {
+		if err := os.Setenv("COMPUTING_POWER", originalComputingPower); err != nil {
+			t.Errorf("Failed to restore COMPUTING_POWER: %v", err)
+		}
+		if err := os.Setenv("ORCHESTRATOR_URL", originalOrchestratorURL); err != nil {
+			t.Errorf("Failed to restore ORCHESTRATOR_URL: %v", err)
+		}
+	}()
 
 	// Тест с некорректным значением
-	os.Setenv("COMPUTING_POWER", "invalid")
+	if err := os.Setenv("COMPUTING_POWER", "invalid"); err != nil {
+		t.Fatalf("Failed to set COMPUTING_POWER: %v", err)
+	}
+	if err := os.Setenv("ORCHESTRATOR_URL", "http://test:8080"); err != nil {
+		t.Fatalf("Failed to set ORCHESTRATOR_URL: %v", err)
+	}
+
 	_, err := configs.NewWorkerConfig()
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid COMPUTING_POWER value")
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "invalid COMPUTING_POWER value")
+	}
 
 	// Тест с нулевым значением
-	os.Setenv("COMPUTING_POWER", "0")
+	if err := os.Setenv("COMPUTING_POWER", "0"); err != nil {
+		t.Fatalf("Failed to set COMPUTING_POWER: %v", err)
+	}
 	_, err = configs.NewWorkerConfig()
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "COMPUTING_POWER must be greater than 0")
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "COMPUTING_POWER must be greater than 0")
+	}
 }

@@ -46,7 +46,11 @@ func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 		l.Error("Failed to create log file", zap.Error(err))
 		l.Logger.Fatal(msg, fields...)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			l.Error("Failed to close log file", zap.Error(err))
+		}
+	}()
 
 	fileCore := zapcore.NewCore(
 		fileEncoder,

@@ -32,7 +32,7 @@ func getWorkerComputingPower() (int, error) {
 	powerStr := getWorkerEnvString("COMPUTING_POWER", "1")
 	power, err := strconv.Atoi(powerStr)
 	if err != nil {
-		return 0, fmt.Errorf("invalid COMPUTING_POWER value: %w", err)
+		return 0, fmt.Errorf("invalid COMPUTING_POWER value: %s", powerStr)
 	}
 	if power < 1 {
 		return 0, fmt.Errorf("COMPUTING_POWER must be greater than 0")

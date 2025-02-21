@@ -5,13 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 func (s *Server) processExpression(expr *models.Expression) {
-	s.logger.Info("Processing expression", zap.String("id", expr.ID), zap.String("expression", expr.Expression))
+	s.logger.Info(common.LogProcessingExpression, zap.String("id", expr.ID), zap.String("expression", expr.Expression))
 
 	if err := s.storage.UpdateExpressionStatus(expr.ID, models.StatusProgress); err != nil {
 		s.logger.Error("Failed to update expression status",
@@ -22,13 +23,13 @@ func (s *Server) processExpression(expr *models.Expression) {
 
 	tokens, err := s.parseExpression(expr.Expression)
 	if err != nil {
-		s.logger.Error("Failed to parse expression",
+		s.logger.Error(common.LogFailedParseExpression,
 			zap.String("id", expr.ID),
-			zap.String("expression", expr.Expression),
+			zap.String(common.FieldExpression, expr.Expression),
 			zap.Error(err))
 
 		if updateErr := s.storage.UpdateExpressionError(expr.ID, err.Error()); updateErr != nil {
-			s.logger.Error("Failed to update expression error",
+			s.logger.Error(common.ErrFailedUpdateExpr,
 				zap.String("id", expr.ID),
 				zap.Error(updateErr))
 		}
@@ -37,11 +38,11 @@ func (s *Server) processExpression(expr *models.Expression) {
 
 	tasks := s.createTasks(expr.ID, tokens)
 	if len(tasks) == 0 {
-		s.logger.Error("No valid tasks created",
+		s.logger.Error(common.LogNoValidTasksCreated,
 			zap.String("id", expr.ID),
-			zap.String("expression", expr.Expression))
+			zap.String(common.FieldExpression, expr.Expression))
 		if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create valid tasks"); updateErr != nil {
-			s.logger.Error("Failed to update expression error",
+			s.logger.Error(common.ErrFailedUpdateExpr,
 				zap.String("id", expr.ID),
 				zap.Error(updateErr))
 		}
@@ -55,7 +56,7 @@ func (s *Server) processExpression(expr *models.Expression) {
 				zap.String("taskID", task.ID),
 				zap.Error(err))
 			if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create tasks"); updateErr != nil {
-				s.logger.Error("Failed to update expression error",
+				s.logger.Error(common.ErrFailedUpdateExpr,
 					zap.String("id", expr.ID),
 					zap.Error(updateErr))
 			}

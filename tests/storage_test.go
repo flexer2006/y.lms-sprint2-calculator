@@ -207,8 +207,8 @@ func TestStorage_GetNextTask(t *testing.T) {
 
 	// Get tasks in order
 	for _, expected := range tasks {
-		task, err := store.GetNextTask()
-		require.NoError(t, err)
+		task, getErr := store.GetNextTask()
+		require.NoError(t, getErr)
 		assert.Equal(t, expected.ID, task.ID)
 		assert.Equal(t, expected.Operation, task.Operation)
 	}
@@ -561,18 +561,28 @@ func TestStorage_EdgeCases(t *testing.T) {
 	}
 	require.NoError(t, store.SaveExpression(expr))
 
+	// Test concurrent updates with valid status transitions
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// First update: PENDING -> IN_PROGRESS
 			_ = store.UpdateExpressionStatus(expr.ID, models.StatusProgress)
-			_ = store.UpdateExpressionStatus(expr.ID, models.StatusComplete)
 		}()
 	}
 	wg.Wait()
 
+	// Verify intermediate status
 	saved, err := store.GetExpression(expr.ID)
+	require.NoError(t, err)
+	assert.Equal(t, models.StatusProgress, saved.Status)
+
+	// Final update: IN_PROGRESS -> COMPLETE
+	require.NoError(t, store.UpdateExpressionResult(expr.ID, 2.0))
+
+	// Verify final status
+	saved, err = store.GetExpression(expr.ID)
 	require.NoError(t, err)
 	assert.Equal(t, models.StatusComplete, saved.Status)
 }

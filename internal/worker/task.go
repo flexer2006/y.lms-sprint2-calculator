@@ -6,23 +6,29 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
+	"go.uber.org/zap"
 )
 
 // getTask получает задачу от оркестратора
 func (a *Agent) getTask() (*models.Task, error) {
-	resp, err := a.httpClient.Get(fmt.Sprintf("%s/internal/task", a.config.OrchestratorURL))
+	resp, err := a.httpClient.Get(fmt.Sprintf(common.PathInternalTask, a.config.OrchestratorURL))
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			a.logger.Error(common.ErrFailedCloseRespBody, zap.Error(err))
+		}
+	}()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil // Нет доступных задач
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf(common.ErrUnexpectedStatusCode, resp.StatusCode)
 	}
 
 	var taskResp models.TaskResponse
@@ -46,17 +52,21 @@ func (a *Agent) sendResult(taskID string, result float64) error {
 	}
 
 	resp, err := a.httpClient.Post(
-		fmt.Sprintf("%s/internal/task", a.config.OrchestratorURL),
-		"application/json",
+		fmt.Sprintf(common.PathInternalTask, a.config.OrchestratorURL),
+		common.ContentTypeJSON,
 		bytes.NewBuffer(body),
 	)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			a.logger.Error(common.ErrFailedCloseRespBody, zap.Error(err))
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return fmt.Errorf(common.ErrUnexpectedStatusCode, resp.StatusCode)
 	}
 
 	return nil

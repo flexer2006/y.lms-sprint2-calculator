@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server"
@@ -22,15 +23,18 @@ func main() {
 
 	log, err := logger.New(opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
+		fmt.Fprintf(os.Stderr, common.ErrFailedInitLogger, err)
 		os.Exit(1)
 	}
-	defer log.Sync() // Используем метод Sync() вместо logger.Close()
-
+	defer func() {
+		if syncErr := log.Sync(); syncErr != nil {
+			fmt.Fprintf(os.Stderr, common.ErrFailedSyncLogger, syncErr)
+		}
+	}()
 	// Загружаем конфигурацию сервера
 	cfg, err := configs.NewServerConfig()
 	if err != nil {
-		log.Fatal("Failed to initialize config", zap.Error(err))
+		log.Fatal(common.ErrFailedInitConfig, zap.Error(err))
 	}
 
 	// Создаем и запускаем сервер
@@ -43,11 +47,11 @@ func main() {
 	// Запускаем сервер в отдельной горутине
 	go func() {
 		if err := srv.Start(); err != nil {
-			log.Fatal("Failed to start server", zap.Error(err))
+			log.Fatal(common.ErrFailedStartServer, zap.Error(err))
 		}
 	}()
 
-	log.Info("Orchestrator service started successfully")
+	log.Info(common.LogOrchestratorStarted)
 
 	// Ожидаем сигнала завершения
 	<-ctx.Done()
@@ -57,8 +61,8 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Error("Server shutdown failed", zap.Error(err))
+		log.Error(common.ErrServerShutdownFailed, zap.Error(err))
 	}
 
-	log.Info("Orchestrator service stopped gracefully")
+	log.Info(common.LogOrchestratorStoppedGrace)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 
 	"go.uber.org/zap"
 )
@@ -39,8 +40,8 @@ func New(cfg *configs.WorkerConfig, log *logger.Logger) *Agent {
 // Start запускает агента
 func (a *Agent) Start() error {
 	a.logger.Info("Starting agent",
-		zap.Int("computing_power", a.config.ComputingPower),
-		zap.String("orchestrator_url", a.config.OrchestratorURL))
+		zap.Int(common.FieldComputingPower, a.config.ComputingPower),
+		zap.String(common.FieldOrchestratorURL, a.config.OrchestratorURL))
 
 	for i := 0; i < a.config.ComputingPower; i++ {
 		a.wg.Add(1)

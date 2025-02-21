@@ -77,7 +77,7 @@ func TestServer_HandleCalculate(t *testing.T) {
 				var resp map[string]string
 				err := json.NewDecoder(w.Body).Decode(&resp)
 				require.NoError(t, err)
-				assert.Contains(t, resp["error"], "Expression cannot be empty")
+				assert.Contains(t, resp["error"], "Invalid request body")
 			},
 		},
 		{
@@ -232,10 +232,10 @@ func TestServer_HandleGetTask(t *testing.T) {
 }
 
 func TestServer_HandleSubmitTaskResult(t *testing.T) {
-	t.Parallel()
+	// Remove t.Parallel() to avoid race conditions
 	_, router := setupTestServer(t)
 
-	// Создаем выражение и получаем задачу
+	// Create a test expression
 	body, err := json.Marshal(models.CalculateRequest{Expression: "2 + 2"})
 	require.NoError(t, err)
 
@@ -244,19 +244,31 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
 
-	// Add a small delay to allow the processExpression goroutine to complete
-	time.Sleep(100 * time.Millisecond)
-
-	req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	require.Equal(t, http.StatusOK, w.Code)
-
+	// Wait for task to be available with timeout
 	var taskResp models.TaskResponse
-	err = json.NewDecoder(w.Body).Decode(&taskResp)
-	require.NoError(t, err)
+	timeout := time.After(2 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 
-	// Тестируем отправку результата
+	for {
+		select {
+		case <-timeout:
+			t.Fatal("timeout waiting for task to be available")
+		case <-ticker.C:
+			req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
+			w = httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			if w.Code == http.StatusOK {
+				err = json.NewDecoder(w.Body).Decode(&taskResp)
+				require.NoError(t, err)
+				goto taskFound
+			}
+		}
+	}
+
+taskFound:
+	// Submit task result
 	result := models.TaskResult{
 		ID:     taskResp.Task.ID,
 		Result: 4.0,
@@ -267,7 +279,7 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 	req = httptest.NewRequest(http.MethodPost, "/internal/task", bytes.NewBuffer(body))
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestServer_Integration(t *testing.T) {

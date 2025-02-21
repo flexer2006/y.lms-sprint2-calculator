@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/storage"
@@ -35,8 +36,8 @@ func New(cfg *configs.ServerConfig, log *logger.Logger) *Server {
 	api.HandleFunc("/expressions/{id}", s.handleGetExpression).Methods(http.MethodGet)
 
 	internal := router.PathPrefix("/internal").Subrouter()
-	internal.HandleFunc("/task", s.handleGetTask).Methods(http.MethodGet)
-	internal.HandleFunc("/task", s.handleSubmitTaskResult).Methods(http.MethodPost)
+	internal.HandleFunc(common.PathTask, s.handleGetTask).Methods(http.MethodGet)
+	internal.HandleFunc(common.PathTask, s.handleSubmitTaskResult).Methods(http.MethodPost)
 
 	s.server = &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -46,7 +47,7 @@ func New(cfg *configs.ServerConfig, log *logger.Logger) *Server {
 	}
 
 	s.logger.Info("Server initialized",
-		zap.String("port", cfg.Port),
+		zap.String(common.FieldPort, cfg.Port),
 		zap.Int64("timeAdditionMS", cfg.TimeAdditionMS),
 		zap.Int64("timeSubtractionMS", cfg.TimeSubtractionMS),
 		zap.Int64("timeMultiplyMS", cfg.TimeMultiplyMS),
@@ -60,7 +61,7 @@ func (s *Server) GetHandler() http.Handler {
 }
 
 func (s *Server) Start() error {
-	s.logger.Info("Starting server", zap.String("port", s.config.Port))
+	s.logger.Info("Starting server", zap.String(common.FieldPort, s.config.Port))
 	return s.server.ListenAndServe()
 }
 

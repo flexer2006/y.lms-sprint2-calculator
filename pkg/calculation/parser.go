@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +22,7 @@ func (p *Parser) parse() (float64, error) {
 		return 0, err
 	}
 	if p.pos < len(p.tokens) {
-		return 0, errors.New("unexpected token")
+		return 0, errors.New(common.ErrUnexpectedToken)
 	}
 	return result, nil
 }
@@ -77,15 +78,15 @@ func (p *Parser) parseTerm() (float64, error) {
 			left *= right
 		case "/":
 			if right == 0 {
-				return 0, errors.New("division by zero")
+				return 0, errors.New(common.ErrDivisionByZero)
 			}
 			left /= right
 		case "%":
 			if right == 0 {
-				return 0, errors.New("modulo by zero")
+				return 0, errors.New(common.ErrModuloByZero)
 			}
 			if left != float64(int(left)) || right != float64(int(right)) {
-				return 0, errors.New("modulo operation requires integer operands")
+				return 0, errors.New(common.ErrInvalidModulo)
 			}
 			left = math.Mod(left, right)
 		}
@@ -116,11 +117,11 @@ func (p *Parser) parsePower() (float64, error) {
 func (p *Parser) parseFactor() (float64, error) {
 	if p.pos >= len(p.tokens) {
 		if logger != nil {
-			logger.Error("Unexpected end of expression",
-				zap.Strings("tokens", p.tokens),
-				zap.Int("position", p.pos))
+			logger.Error(common.LogUnexpectedEndExpr,
+				zap.Strings(common.FieldTokens, p.tokens),
+				zap.Int(common.FieldPosition, p.pos))
 		}
-		return 0, errors.New("unexpected end of expression")
+		return 0, errors.New(common.ErrUnexpectedEndExpr)
 	}
 
 	token := p.tokens[p.pos]
@@ -131,20 +132,20 @@ func (p *Parser) parseFactor() (float64, error) {
 		result, err := p.parseExpression()
 		if err != nil {
 			if logger != nil {
-				logger.Error("Failed to parse expression in parentheses",
+				logger.Error(common.LogFailedParseParentheses,
 					zap.Error(err),
-					zap.Strings("tokens", p.tokens),
-					zap.Int("position", p.pos))
+					zap.Strings(common.FieldTokens, p.tokens),
+					zap.Int(common.FieldPosition, p.pos))
 			}
 			return 0, err
 		}
 		if p.pos >= len(p.tokens) || p.tokens[p.pos] != ")" {
 			if logger != nil {
-				logger.Error("Missing closing parenthesis",
-					zap.Strings("tokens", p.tokens),
-					zap.Int("position", p.pos))
+				logger.Error(common.LogMissingCloseParen,
+					zap.Strings(common.FieldTokens, p.tokens),
+					zap.Int(common.FieldPosition, p.pos))
 			}
-			return 0, errors.New("missing closing parenthesis")
+			return 0, errors.New(common.ErrMissingCloseParen)
 		}
 		p.pos++
 		return result, nil
@@ -152,10 +153,10 @@ func (p *Parser) parseFactor() (float64, error) {
 		factor, err := p.parseFactor()
 		if err != nil {
 			if logger != nil {
-				logger.Error("Failed to parse negative factor",
+				logger.Error(common.LogFailedParseNegative,
 					zap.Error(err),
-					zap.Strings("tokens", p.tokens),
-					zap.Int("position", p.pos))
+					zap.Strings(common.FieldTokens, p.tokens),
+					zap.Int(common.FieldPosition, p.pos))
 			}
 			return 0, err
 		}
@@ -164,8 +165,8 @@ func (p *Parser) parseFactor() (float64, error) {
 		num, err := strconv.ParseFloat(token, 64)
 		if err != nil {
 			if logger != nil {
-				logger.Error("Invalid number format",
-					zap.String("token", token),
+				logger.Error(common.LogInvalidNumberFormat,
+					zap.String(common.FieldToken, token),
 					zap.Error(err))
 			}
 			return 0, fmt.Errorf("invalid number: %s", token)
@@ -173,10 +174,10 @@ func (p *Parser) parseFactor() (float64, error) {
 		return num, nil
 	default:
 		if logger != nil {
-			logger.Error("Unexpected token",
-				zap.String("token", token),
-				zap.Strings("tokens", p.tokens),
-				zap.Int("position", p.pos))
+			logger.Error(common.LogUnexpectedToken,
+				zap.String(common.FieldToken, token),
+				zap.Strings(common.FieldTokens, p.tokens),
+				zap.Int(common.FieldPosition, p.pos))
 		}
 		return 0, fmt.Errorf("unexpected token: %s", token)
 	}

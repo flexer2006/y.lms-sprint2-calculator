@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 
 	"go.uber.org/zap"
@@ -27,20 +28,20 @@ func (s *Storage) SaveTask(task *models.Task) error {
 
 	s.logger.Info("Task saved successfully",
 		zap.String("id", task.ID),
-		zap.String("expressionID", task.ExpressionID),
-		zap.String("operation", task.Operation))
+		zap.String(common.FieldExpressionID, task.ExpressionID),
+		zap.String(common.FieldOperation, task.Operation))
 	return nil
 }
 
 func (s *Storage) GetTask(id string) (*models.Task, error) {
 	if value, ok := s.tasks.Load(id); ok {
-		s.logger.Debug("Task retrieved",
+		s.logger.Debug(common.LogTaskRetrieved,
 			zap.String("id", id))
 		return value.(*models.Task), nil
 	}
 	s.logger.Warn("Task not found",
 		zap.String("id", id))
-	return nil, fmt.Errorf("task not found")
+	return nil, fmt.Errorf(common.ErrTaskNotFound)
 }
 
 func (s *Storage) UpdateTaskResult(id string, result float64) error {
@@ -55,7 +56,7 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 	}
 	s.logger.Error("Failed to update task result: task not found",
 		zap.String("id", id))
-	return fmt.Errorf("task not found")
+	return fmt.Errorf(common.ErrTaskNotFound)
 }
 
 func (s *Storage) GetNextTask() (*models.Task, error) {
@@ -64,7 +65,7 @@ func (s *Storage) GetNextTask() (*models.Task, error) {
 
 	if len(s.taskQueue) == 0 {
 		s.logger.Debug("No tasks available in queue")
-		return nil, fmt.Errorf("no tasks available")
+		return nil, fmt.Errorf(common.ErrTaskNotFound)
 	}
 
 	task := s.taskQueue[0]
@@ -72,6 +73,6 @@ func (s *Storage) GetNextTask() (*models.Task, error) {
 
 	s.logger.Info("Next task retrieved from queue",
 		zap.String("id", task.ID),
-		zap.String("expressionID", task.ExpressionID))
+		zap.String(common.FieldExpressionID, task.ExpressionID))
 	return &task, nil
 }

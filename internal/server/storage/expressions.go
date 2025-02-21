@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 
 	"go.uber.org/zap"
@@ -11,8 +12,8 @@ import (
 
 func (s *Storage) SaveExpression(expr *models.Expression) error {
 	if expr.ID == "" {
-		s.logger.Error("Failed to save expression: empty ID")
-		return fmt.Errorf("expression ID cannot be empty")
+		s.logger.Error(common.LogFailedSaveEmptyID)
+		return fmt.Errorf(common.ErrEmptyExpressionID)
 	}
 
 	now := time.Now()
@@ -22,35 +23,42 @@ func (s *Storage) SaveExpression(expr *models.Expression) error {
 	expr.UpdatedAt = now.Add(time.Millisecond)
 
 	s.expressions.Store(expr.ID, expr)
-	s.logger.Info("Expression saved successfully",
-		zap.String("id", expr.ID),
-		zap.String("expression", expr.Expression),
-		zap.String("status", string(expr.Status)))
+	s.logger.Info(common.LogExpressionSaved,
+		zap.String(common.FieldID, expr.ID),
+		zap.String(common.FieldExpression, expr.Expression),
+		zap.String(common.FieldStatus, string(expr.Status)))
 	return nil
 }
 
 func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	if value, ok := s.expressions.Load(id); ok {
-		s.logger.Debug("Expression retrieved",
-			zap.String("id", id))
+		s.logger.Debug(common.LogExpressionRetrieved,
+			zap.String(common.FieldID, id))
 		return value.(*models.Expression), nil
 	}
-	s.logger.Warn("Expression not found",
-		zap.String("id", id))
-	return nil, fmt.Errorf("expression not found")
+	s.logger.Warn(common.LogExpressionNotFound,
+		zap.String(common.FieldID, id))
+	return nil, fmt.Errorf(common.ErrExpressionNotFound)
 }
 
 func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStatus) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
 		oldStatus := expr.Status
 
+		if oldStatus == status {
+			return nil // Already in desired status
+		}
+
 		if !isValidStatusTransition(oldStatus, status) {
-			s.logger.Error("Invalid status transition",
-				zap.String("id", id),
-				zap.String("oldStatus", string(oldStatus)),
-				zap.String("newStatus", string(status)))
-			return fmt.Errorf("invalid status transition from %s to %s", oldStatus, status)
+			s.logger.Error(common.LogInvalidStatusTransition,
+				zap.String(common.FieldID, id),
+				zap.String(common.FieldOldStatus, string(oldStatus)),
+				zap.String(common.FieldNewStatus, string(status)))
+			return fmt.Errorf(common.ErrInvalidStatusTransition, oldStatus, status)
 		}
 
 		updated := *expr
@@ -58,15 +66,15 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 		updated.UpdatedAt = time.Now().Add(time.Millisecond)
 
 		s.expressions.Store(id, &updated)
-		s.logger.Info("Expression status updated",
-			zap.String("id", id),
-			zap.String("oldStatus", string(oldStatus)),
-			zap.String("newStatus", string(status)))
+		s.logger.Info(common.LogExpressionStatusUpdated,
+			zap.String(common.FieldID, id),
+			zap.String(common.FieldOldStatus, string(oldStatus)),
+			zap.String(common.FieldNewStatus, string(status)))
 		return nil
 	}
-	s.logger.Error("Failed to update expression status: expression not found",
-		zap.String("id", id))
-	return fmt.Errorf("expression not found")
+	s.logger.Error(common.LogFailedUpdateStatusNotFound,
+		zap.String(common.FieldID, id))
+	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
 func (s *Storage) UpdateExpressionResult(id string, result float64) error {
@@ -83,7 +91,7 @@ func (s *Storage) UpdateExpressionResult(id string, result float64) error {
 		s.expressions.Store(id, &updated)
 		return nil
 	}
-	return fmt.Errorf("expression not found")
+	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
 func (s *Storage) UpdateExpressionError(id string, err string) error {
@@ -100,7 +108,7 @@ func (s *Storage) UpdateExpressionError(id string, err string) error {
 		s.expressions.Store(id, &updated)
 		return nil
 	}
-	return fmt.Errorf("expression not found")
+	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
 func (s *Storage) ListExpressions() []*models.Expression {
@@ -109,8 +117,8 @@ func (s *Storage) ListExpressions() []*models.Expression {
 		expressions = append(expressions, value.(*models.Expression))
 		return true
 	})
-	s.logger.Debug("Listed all expressions",
-		zap.Int("count", len(expressions)))
+	s.logger.Debug(common.LogListedAllExpressions,
+		zap.Int(common.FieldCount, len(expressions)))
 	return expressions
 }
 

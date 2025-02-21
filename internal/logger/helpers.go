@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -20,13 +21,13 @@ const (
 
 func newEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
-		TimeKey:       "timestamp",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
+		TimeKey:       common.LogFieldTimestamp,
+		LevelKey:      common.LogFieldLevel,
+		NameKey:       common.LogFieldLogger,
+		CallerKey:     common.LogFieldCaller,
 		FunctionKey:   zapcore.OmitKey,
-		MessageKey:    "message",
-		StacktraceKey: "stacktrace",
+		MessageKey:    common.LogFieldMessage,
+		StacktraceKey: common.LogFieldStacktrace,
 		LineEnding:    zapcore.DefaultLineEnding,
 		EncodeLevel:   zapcore.LowercaseLevelEncoder,
 		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -42,21 +43,21 @@ func extractContextFields(ctx context.Context) []zapcore.Field {
 
 	// Extract context values using both string and custom key types
 	if traceID := ctx.Value(TraceIDKey); traceID != nil {
-		fields = append(fields, zap.String("trace_id", traceID.(string)))
+		fields = append(fields, zap.String(common.FieldTraceID, traceID.(string)))
 	} else if traceID := ctx.Value(string(TraceIDKey)); traceID != nil {
-		fields = append(fields, zap.String("trace_id", traceID.(string)))
+		fields = append(fields, zap.String(common.FieldTraceID, traceID.(string)))
 	}
 
 	if requestID := ctx.Value(RequestIDKey); requestID != nil {
-		fields = append(fields, zap.String("request_id", requestID.(string)))
+		fields = append(fields, zap.String(common.FieldRequestID, requestID.(string)))
 	} else if requestID := ctx.Value(string(RequestIDKey)); requestID != nil {
-		fields = append(fields, zap.String("request_id", requestID.(string)))
+		fields = append(fields, zap.String(common.FieldRequestID, requestID.(string)))
 	}
 
 	if correlationID := ctx.Value(CorrelationIDKey); correlationID != nil {
-		fields = append(fields, zap.String("correlation_id", correlationID.(string)))
+		fields = append(fields, zap.String(common.FieldCorrelationID, correlationID.(string)))
 	} else if correlationID := ctx.Value(string(CorrelationIDKey)); correlationID != nil {
-		fields = append(fields, zap.String("correlation_id", correlationID.(string)))
+		fields = append(fields, zap.String(common.FieldCorrelationID, correlationID.(string)))
 	}
 
 	return fields
