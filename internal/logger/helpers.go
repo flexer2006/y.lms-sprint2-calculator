@@ -8,6 +8,16 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// ctxKey is a custom type for context keys
+type ctxKey string
+
+// Context key constants
+const (
+	TraceIDKey       ctxKey = "trace_id"
+	RequestIDKey     ctxKey = "request_id"
+	CorrelationIDKey ctxKey = "correlation_id"
+)
+
 func newEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:       "timestamp",
@@ -30,16 +40,23 @@ func newEncoderConfig() zapcore.EncoderConfig {
 func extractContextFields(ctx context.Context) []zapcore.Field {
 	var fields []zapcore.Field
 
-	if traceID := ctx.Value("trace_id"); traceID != nil {
-		fields = append(fields, zap.Any("trace_id", traceID))
+	// Extract context values using both string and custom key types
+	if traceID := ctx.Value(TraceIDKey); traceID != nil {
+		fields = append(fields, zap.String("trace_id", traceID.(string)))
+	} else if traceID := ctx.Value(string(TraceIDKey)); traceID != nil {
+		fields = append(fields, zap.String("trace_id", traceID.(string)))
 	}
 
-	if requestID := ctx.Value("request_id"); requestID != nil {
-		fields = append(fields, zap.Any("request_id", requestID))
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		fields = append(fields, zap.String("request_id", requestID.(string)))
+	} else if requestID := ctx.Value(string(RequestIDKey)); requestID != nil {
+		fields = append(fields, zap.String("request_id", requestID.(string)))
 	}
 
-	if correlationID := ctx.Value("correlation_id"); correlationID != nil {
-		fields = append(fields, zap.Any("correlation_id", correlationID))
+	if correlationID := ctx.Value(CorrelationIDKey); correlationID != nil {
+		fields = append(fields, zap.String("correlation_id", correlationID.(string)))
+	} else if correlationID := ctx.Value(string(CorrelationIDKey)); correlationID != nil {
+		fields = append(fields, zap.String("correlation_id", correlationID.(string)))
 	}
 
 	return fields

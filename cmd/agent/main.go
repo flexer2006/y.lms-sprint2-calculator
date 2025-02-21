@@ -10,6 +10,7 @@ import (
 	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/worker"
+
 	"go.uber.org/zap"
 )
 
