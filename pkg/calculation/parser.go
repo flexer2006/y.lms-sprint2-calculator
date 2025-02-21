@@ -5,32 +5,11 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 
 	"go.uber.org/zap"
 )
 
-var logger *zap.Logger
-
-// InitLogger initializes the logger for the calculation package
-func InitLogger(l *zap.Logger) {
-	logger = l
-}
-
-func EvaluateExpression(expression string) (float64, error) {
-	if expression == "" {
-		return 0, errors.New("expression is empty")
-	}
-
-	tokens := tokenize(expression)
-	if len(tokens) == 0 {
-		return 0, errors.New("invalid expression")
-	}
-
-	parser := &Parser{tokens: tokens, pos: 0}
-	return parser.parse()
-}
-
+// Parser represents a mathematical expression parser
 type Parser struct {
 	tokens []string
 	pos    int
@@ -137,7 +116,7 @@ func (p *Parser) parsePower() (float64, error) {
 func (p *Parser) parseFactor() (float64, error) {
 	if p.pos >= len(p.tokens) {
 		if logger != nil {
-			logger.Error("Unexpected end of expression", 
+			logger.Error("Unexpected end of expression",
 				zap.Strings("tokens", p.tokens),
 				zap.Int("position", p.pos))
 		}
@@ -201,83 +180,4 @@ func (p *Parser) parseFactor() (float64, error) {
 		}
 		return 0, fmt.Errorf("unexpected token: %s", token)
 	}
-}
-
-func tokenize(expression string) []string {
-	var tokens []string
-	var number strings.Builder
-	var lastWasNumber bool
-
-	for i := 0; i < len(expression); i++ {
-		char := rune(expression[i])
-
-		switch char {
-		case ' ', '\t':
-			if number.Len() > 0 {
-				tokens = append(tokens, number.String())
-				number.Reset()
-				lastWasNumber = true
-			}
-			continue
-		case '+', '-', '*', '/', '%', '^', '(', ')':
-			if number.Len() > 0 {
-				tokens = append(tokens, number.String())
-				number.Reset()
-				lastWasNumber = true
-			}
-
-			if char == '-' {
-				if i == 0 || expression[i-1] == '(' || isOperator(string(expression[i-1])) {
-
-					tokens = append(tokens, "-")
-					continue
-				}
-			}
-
-			if lastWasNumber && char == '(' {
-				return nil
-			}
-
-			tokens = append(tokens, string(char))
-			lastWasNumber = false
-		default:
-			if lastWasNumber && number.Len() == 0 {
-				return nil
-			}
-			if char == '.' {
-				if strings.Contains(number.String(), ".") {
-					return nil
-				}
-			}
-			if !isDigit(char) && char != '.' {
-				return nil
-			}
-			number.WriteRune(char)
-			lastWasNumber = false
-		}
-	}
-
-	if number.Len() > 0 {
-		tokens = append(tokens, number.String())
-	}
-
-	return tokens
-}
-
-// Helper functions
-func isOperator(token string) bool {
-	switch token {
-	case "+", "-", "*", "/", "%", "^":
-		return true
-	}
-	return false
-}
-
-func isNumber(s string) bool {
-	_, err := strconv.ParseFloat(s, 64)
-	return err == nil
-}
-
-func isDigit(c rune) bool {
-	return c >= '0' && c <= '9'
 }

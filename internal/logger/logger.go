@@ -12,26 +12,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LogLevel определяет уровень логирования
-type LogLevel string
-
-const (
-	Debug LogLevel = "debug"
-	Info  LogLevel = "info"
-	Warn  LogLevel = "warn"
-	Error LogLevel = "error"
-)
-
-// Options определяет настройки логгера
-type Options struct {
-	Level       LogLevel
-	Encoding    string
-	OutputPath  []string
-	ErrorPath   []string
-	Development bool
-	LogDir      string
-}
-
 // Logger представляет собой обертку над zap.Logger
 type Logger struct {
 	*zap.Logger
@@ -52,17 +32,6 @@ func Close() error {
 	return nil
 }
 
-func DefaultOptions() Options {
-	return Options{
-		Level:       Info,
-		Encoding:    "json",
-		OutputPath:  []string{"stdout"},
-		ErrorPath:   []string{"stderr"},
-		Development: false,
-		LogDir:      "logs",
-	}
-}
-
 func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 	if err := os.MkdirAll(l.opts.LogDir, 0755); err != nil {
 		l.Error("Failed to create logs directory", zap.Error(err))
@@ -75,21 +44,27 @@ func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 	file, err := os.Create(logFile)
 	if err != nil {
 		l.Error("Failed to create log file", zap.Error(err))
-	} else {
-		defer file.Close()
+		l.Logger.Fatal(msg, fields...)
+	}
+	defer file.Close()
 
-		fileCore := zapcore.NewCore(
-			fileEncoder,
-			zapcore.AddSync(file),
-			zapcore.FatalLevel,
-		)
+	fileCore := zapcore.NewCore(
+		fileEncoder,
+		zapcore.AddSync(file),
+		zapcore.FatalLevel,
+	)
 
-		combinedCore := zapcore.NewTee(l.Core(), fileCore)
-		logger := zap.New(combinedCore)
+	combinedCore := zapcore.NewTee(l.Core(), fileCore)
+	logger := zap.New(combinedCore)
 
-		logger.Fatal(msg, fields...)
+	// Write the message and ensure it's synced to disk
+	logger.Fatal(msg, fields...)
+	if err := logger.Sync(); err != nil {
+		l.Error("Failed to sync fatal log", zap.Error(err))
 	}
 
+	// This line will never be reached due to os.Exit in Fatal,
+	// but we keep it as a fallback
 	l.Logger.Fatal(msg, fields...)
 }
 
@@ -173,43 +148,6 @@ func (l *Logger) Sync() error {
 		return err1
 	}
 	return err2
-}
-
-func newEncoderConfig() zapcore.EncoderConfig {
-	return zapcore.EncoderConfig{
-		TimeKey:       "timestamp",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
-		FunctionKey:   zapcore.OmitKey,
-		MessageKey:    "message",
-		StacktraceKey: "stacktrace",
-		LineEnding:    zapcore.DefaultLineEnding,
-		EncodeLevel:   zapcore.LowercaseLevelEncoder,
-		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(t.Format("02-01-2006 15:04:05"))
-		},
-		EncodeDuration: zapcore.MillisDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-}
-
-func extractContextFields(ctx context.Context) []zapcore.Field {
-	var fields []zapcore.Field
-
-	if traceID := ctx.Value("trace_id"); traceID != nil {
-		fields = append(fields, zap.Any("trace_id", traceID))
-	}
-
-	if requestID := ctx.Value("request_id"); requestID != nil {
-		fields = append(fields, zap.Any("request_id", requestID))
-	}
-
-	if correlationID := ctx.Value("correlation_id"); correlationID != nil {
-		fields = append(fields, zap.Any("correlation_id", correlationID))
-	}
-
-	return fields
 }
 
 // Close закрывает логгер и освобождает ресурсы
