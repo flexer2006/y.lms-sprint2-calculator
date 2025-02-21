@@ -52,6 +52,27 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 		s.logger.Info("Task result updated",
 			zap.String("id", id),
 			zap.Float64("result", result))
+
+		// Check if all tasks for this expression are completed
+		allTasksCompleted := true
+		s.tasks.Range(func(_, v interface{}) bool {
+			t := v.(*models.Task)
+			if t.ExpressionID == task.ExpressionID && t.Result == nil {
+				allTasksCompleted = false
+				return false
+			}
+			return true
+		})
+
+		// If all tasks are completed, update the expression status
+		if allTasksCompleted {
+			if err := s.UpdateExpressionStatus(task.ExpressionID, models.StatusComplete); err != nil {
+				s.logger.Error("Failed to update expression status",
+					zap.String("expressionID", task.ExpressionID),
+					zap.Error(err))
+			}
+		}
+
 		return nil
 	}
 	s.logger.Error("Failed to update task result: task not found",
