@@ -93,6 +93,20 @@ function RunProd {
     Get-ChildItem env: | Where-Object { $_.Name -match "COMPUTING_POWER|TIME_|ORCHESTRATOR_URL|PORT" }
 }
 
+# Новая функция запуска с переменными из .env
+function Run {
+    Write-Host "Starting services with .env variables..."
+    
+    Build  # Сборка приложения
+    
+    # Запускаем процессы
+    Start-Process -FilePath "$BUILD_DIR\orchestrator.exe" -NoNewWindow
+    Start-Process -FilePath "$BUILD_DIR\agent.exe" -NoNewWindow
+    
+    Write-Host "Environment variables loaded from .env (or defaults):"
+    Get-ChildItem env: | Where-Object { $_.Name -match "COMPUTING_POWER|TIME_|ORCHESTRATOR_URL|PORT" }
+}
+
 # Функция остановки запущенных процессов
 function Stop {
     Write-Host "Stopping services..."
@@ -112,6 +126,7 @@ switch ($Command) {
     "test" { Test }
     "run-dev" { RunDev }
     "run-prod" { RunProd }
+    "run" { Run }  # Добавлена новая команда
     "stop" { Stop }
     default { Write-Host "Unknown command: $Command" }
 }
