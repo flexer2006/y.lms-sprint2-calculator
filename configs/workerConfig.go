@@ -20,31 +20,34 @@ func NewWorkerConfig() (*WorkerConfig, error) {
 		return nil, fmt.Errorf("failed to get computing power: %w", err)
 	}
 
-	orchestratorURL := getWorkerEnvString("ORCHESTRATOR_URL", "http://localhost:8080")
-
 	return &WorkerConfig{
 		ComputingPower:  power,
-		OrchestratorURL: orchestratorURL,
+		OrchestratorURL: getWorkerEnvString("ORCHESTRATOR_URL", "http://localhost:8080"),
 	}, nil
 }
 
 // getWorkerComputingPower retrieves the number of workers from the environment variable.
 func getWorkerComputingPower() (int, error) {
 	powerStr := getWorkerEnvString("COMPUTING_POWER", "1")
+
 	power, err := strconv.Atoi(powerStr)
 	if err != nil {
 		return 0, fmt.Errorf("invalid COMPUTING_POWER value: %s", powerStr)
 	}
+
 	if power < 1 {
 		return 0, fmt.Errorf("COMPUTING_POWER must be greater than 0")
 	}
+
 	return power, nil
 }
 
 // getWorkerEnvString retrieves an environment variable value with a default value.
 func getWorkerEnvString(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
 	}
-	return defaultValue
+
+	return value
 }

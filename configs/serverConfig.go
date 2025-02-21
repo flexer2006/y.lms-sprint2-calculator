@@ -38,8 +38,10 @@ func NewServerConfig() (*ServerConfig, error) {
 		return nil, fmt.Errorf("invalid TIME_DIVISIONS_MS: %w", err)
 	}
 
+	port := getEnvString("PORT", "8080")
+
 	return &ServerConfig{
-		Port:              getEnvString("PORT", "8080"),
+		Port:              port,
 		TimeAdditionMS:    timeAdd,
 		TimeSubtractionMS: timeSub,
 		TimeMultiplyMS:    timeMul,
@@ -49,16 +51,18 @@ func NewServerConfig() (*ServerConfig, error) {
 
 // getEnvString retrieves a string value from the environment or returns a default value.
 func getEnvString(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
 	}
-	return defaultValue
+	return value
 }
 
 // getEnvInt64 retrieves an int64 value from the environment or returns a default value.
 func getEnvInt64(key string, defaultValue int64) (int64, error) {
-	if value, exists := os.LookupEnv(key); exists {
-		return strconv.ParseInt(value, 10, 64)
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue, nil
 	}
-	return defaultValue, nil
+	return strconv.ParseInt(value, 10, 64)
 }
