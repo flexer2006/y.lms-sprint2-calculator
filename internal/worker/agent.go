@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/configs"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/logger"
-	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 
 	"go.uber.org/zap"
 )
