@@ -26,12 +26,26 @@ func main() {
 
 	log, err := logger.New(opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, common.ErrFailedInitLogger, err)
+		_, printErr := fmt.Fprintf(os.Stderr, common.ErrFailedInitLogger, err)
+		if printErr != nil {
+			_, writeErr := fmt.Fprintln(os.Stderr, "Failed to write to stderr:", printErr)
+			if writeErr != nil {
+				os.Exit(2)
+			}
+			os.Exit(2)
+		}
 		os.Exit(1)
 	}
 	defer func() {
 		if syncErr := log.Sync(); syncErr != nil {
-			fmt.Fprintf(os.Stderr, common.ErrFailedSyncLogger, syncErr)
+			_, printErr := fmt.Fprintf(os.Stderr, common.ErrFailedSyncLogger, syncErr)
+			if printErr != nil {
+				_, writeErr := fmt.Fprintln(os.Stderr, "Failed to write to stderr:", printErr)
+				if writeErr != nil {
+					os.Exit(2)
+				}
+				os.Exit(2)
+			}
 		}
 	}()
 
