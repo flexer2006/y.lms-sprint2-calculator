@@ -12,7 +12,7 @@ import (
 
 func (s *Storage) SaveExpression(expr *models.Expression) error {
 	if expr.ID == "" {
-		s.logger.Error(common.LogFailedSaveEmptyID)
+		s.logger.Error("Failed to save expression: empty ID")
 		return fmt.Errorf(common.ErrEmptyExpressionID)
 	}
 
@@ -23,7 +23,7 @@ func (s *Storage) SaveExpression(expr *models.Expression) error {
 	expr.UpdatedAt = now.Add(time.Millisecond)
 
 	s.expressions.Store(expr.ID, expr)
-	s.logger.Info(common.LogExpressionSaved,
+	s.logger.Info("Expression saved successfully",
 		zap.String(common.FieldID, expr.ID),
 		zap.String(common.FieldExpression, expr.Expression),
 		zap.String(common.FieldStatus, string(expr.Status)))
@@ -32,11 +32,11 @@ func (s *Storage) SaveExpression(expr *models.Expression) error {
 
 func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	if value, ok := s.expressions.Load(id); ok {
-		s.logger.Debug(common.LogExpressionRetrieved,
+		s.logger.Debug("Expression retrieved",
 			zap.String(common.FieldID, id))
 		return value.(*models.Expression), nil
 	}
-	s.logger.Warn(common.LogExpressionNotFound,
+	s.logger.Warn("Expression not found",
 		zap.String(common.FieldID, id))
 	return nil, fmt.Errorf(common.ErrExpressionNotFound)
 }

@@ -42,13 +42,13 @@ help:
 	@echo "  all              - clean, deps, build"
 	@echo "  deps             - download and verify dependencies"
 	@echo "  check-deps       - tidy and verify modules"
-	@echo "  build            - build binaries (depends on $(BUILD_DIR))"
+	@echo "  build            - build binaries"
 	@echo "  clean            - clean build artifacts"
 	@echo "  test             - run tests with race and coverage"
 	@echo "  test-short       - run short tests"
 	@echo "  test-coverage    - generate coverage report"
 	@echo "  lint             - run golangci-lint"
-	@echo "  run              - run orchestrator and agent"
+	@echo "  run              - run with .env variables"
 	@echo "  run-dev          - run in development mode"
 	@echo "  run-prod         - run in production mode"
 	@echo "  stop             - stop running services"
@@ -71,8 +71,21 @@ check-deps:
 
 # Сборка бинарников
 build: deps $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY) $(AGENT_MAIN)
-	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY) $(ORCHESTRATOR_MAIN)
+	# Linux builds
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-linux-amd64 $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-linux-amd64 $(ORCHESTRATOR_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-linux-arm64 $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-linux-arm64 $(ORCHESTRATOR_MAIN)
+	# Windows builds
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-windows-amd64.exe $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-windows-amd64.exe $(ORCHESTRATOR_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-windows-arm64.exe $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-windows-arm64.exe $(ORCHESTRATOR_MAIN)
+	# macOS builds
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-macos-amd64 $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-macos-amd64 $(ORCHESTRATOR_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-macos-arm64 $(AGENT_MAIN)
+	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-macos-arm64 $(ORCHESTRATOR_MAIN)
 
 # Очистка сборочных артефактов
 clean:

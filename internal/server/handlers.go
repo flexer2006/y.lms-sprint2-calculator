@@ -7,6 +7,7 @@ import (
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -15,14 +16,14 @@ import (
 func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	var req models.CalculateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.logger.Error(common.LogFailedDecodeBody,
+		s.logger.Error("Failed to decode request body",
 			zap.Error(err))
 		s.writeError(w, http.StatusUnprocessableEntity, common.ErrInvalidRequestBody)
 		return
 	}
 
 	if req.Expression == "" {
-		s.logger.Warn(common.LogEmptyExpression)
+		s.logger.Warn("Empty expression received")
 		s.writeError(w, http.StatusUnprocessableEntity, common.ErrInvalidRequestBody)
 		return
 	}
@@ -36,14 +37,14 @@ func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.storage.SaveExpression(expr); err != nil {
-		s.logger.Error(common.LogFailedSaveExpr,
+		s.logger.Error("Failed to save expression",
 			zap.String(common.FieldExpression, req.Expression),
 			zap.Error(err))
 		s.writeError(w, http.StatusInternalServerError, common.ErrFailedProcessExpression)
 		return
 	}
 
-	s.logger.Info(common.LogExpressionReceived,
+	s.logger.Info("Expression received for calculation",
 		zap.String("id", expr.ID),
 		zap.String(common.FieldExpression, expr.Expression))
 

@@ -12,16 +12,16 @@ import (
 func (a *Agent) worker(id int) {
 	defer a.wg.Done()
 
-	a.logger.Info(common.LogWorkerStarting, zap.Int(common.FieldWorkerID, id))
+	a.logger.Info("Starting worker", zap.Int(common.FieldWorkerID, id))
 
 	for {
 		select {
 		case <-a.ctx.Done():
-			a.logger.Info(common.LogWorkerStopped, zap.Int(common.FieldWorkerID, id))
+			a.logger.Info("Worker stopped", zap.Int(common.FieldWorkerID, id))
 			return
 		default:
 			if err := a.processTask(id); err != nil {
-				a.logger.Error(common.LogFailedProcessTask,
+				a.logger.Error("Failed to process task",
 					zap.Int(common.FieldWorkerID, id),
 					zap.Error(err))
 				time.Sleep(time.Second)
@@ -35,7 +35,7 @@ func (a *Agent) processTask(workerID int) error {
 	// Получаем задачу от оркестратора
 	task, err := a.getTask()
 	if err != nil {
-		return fmt.Errorf(common.ErrFormatWithWrap, common.LogFailedGetTask, err)
+		return fmt.Errorf(common.ErrFormatWithWrap, "failed to get task", err)
 	}
 
 	// Если задач нет, ждем немного
@@ -44,7 +44,7 @@ func (a *Agent) processTask(workerID int) error {
 		return nil
 	}
 
-	a.logger.Info(common.LogProcessingTask,
+	a.logger.Info("Processing task",
 		zap.Int(common.FieldWorkerID, workerID),
 		zap.String(common.FieldTaskID, task.ID),
 		zap.String(common.FieldOperation, task.Operation))
