@@ -1,3 +1,4 @@
+// Package main is the entry point for the agent application.
 package main
 
 import (
@@ -15,8 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// main initializes the logger, configuration, and starts the agent.
+// It also handles graceful shutdown on receiving termination signals.
 func main() {
-	// Инициализируем логгер
+
 	opts := logger.DefaultOptions()
 	opts.LogDir = "logs/agent"
 
@@ -31,17 +34,14 @@ func main() {
 		}
 	}()
 
-	// Создаем контекст с отменой
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Инициализируем конфигурацию агента
 	cfg, err := configs.NewWorkerConfig()
 	if err != nil {
 		log.Fatal(common.ErrFailedInitConfig, zap.Error(err))
 	}
 
-	// Создаем и запускаем агента
 	agent := worker.New(cfg, log)
 	if err := agent.Start(); err != nil {
 		log.Fatal(common.ErrFailedStartAgent, zap.Error(err))
@@ -49,7 +49,6 @@ func main() {
 
 	log.Info(common.LogAgentStarted)
 
-	// Ожидаем сигнала завершения
 	<-ctx.Done()
 
 	agent.Stop()

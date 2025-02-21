@@ -1,3 +1,4 @@
+// Package server provides the HTTP server setup and management.
 package server
 
 import (
@@ -14,6 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Server represents the HTTP server with its configuration, storage, and logger.
 type Server struct {
 	config  *configs.ServerConfig
 	storage *storage.Storage
@@ -21,6 +23,7 @@ type Server struct {
 	server  *http.Server
 }
 
+// New creates a new Server instance with the provided configuration and logger.
 func New(cfg *configs.ServerConfig, log *logger.Logger) *Server {
 	s := &Server{
 		config:  cfg,
@@ -56,15 +59,18 @@ func New(cfg *configs.ServerConfig, log *logger.Logger) *Server {
 	return s
 }
 
+// GetHandler returns the HTTP handler for the server.
 func (s *Server) GetHandler() http.Handler {
 	return s.server.Handler
 }
 
+// Start begins listening on the configured port and serves HTTP requests.
 func (s *Server) Start() error {
 	s.logger.Info("Starting server", zap.String(common.FieldPort, s.config.Port))
 	return s.server.ListenAndServe()
 }
 
+// Shutdown gracefully shuts down the server without interrupting active connections.
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }

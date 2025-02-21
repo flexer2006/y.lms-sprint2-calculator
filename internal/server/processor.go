@@ -1,3 +1,4 @@
+// Package server provides functionalities for processing mathematical expressions.
 package server
 
 import (
@@ -11,6 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// processExpression processes a given mathematical expression by creating tasks.
 func (s *Server) processExpression(expr *models.Expression) {
 	s.logger.Info(common.LogProcessingExpression, zap.String("id", expr.ID), zap.String("expression", expr.Expression))
 
@@ -69,6 +71,7 @@ func (s *Server) processExpression(expr *models.Expression) {
 		zap.Int("taskCount", len(tasks)))
 }
 
+// parseExpression parses a mathematical expression into tokens.
 func (s *Server) parseExpression(expression string) ([]string, error) {
 	expression = strings.ReplaceAll(expression, " ", "")
 
@@ -109,6 +112,7 @@ func (s *Server) parseExpression(expression string) ([]string, error) {
 	return tokens, nil
 }
 
+// createTasks creates computational tasks from tokens of an expression.
 func (s *Server) createTasks(exprID string, tokens []string) []*models.Task {
 	var tasks []*models.Task
 
@@ -138,6 +142,7 @@ func (s *Server) createTasks(exprID string, tokens []string) []*models.Task {
 	return tasks
 }
 
+// getOperationTime returns the time required for a specific operation.
 func (s *Server) getOperationTime(op string) int64 {
 	switch op {
 	case "+":
@@ -153,6 +158,7 @@ func (s *Server) getOperationTime(op string) int64 {
 	}
 }
 
+// isOperator checks if a token is a valid operator.
 func isOperator(token string) bool {
 	switch token {
 	case "+", "-", "*", "/":
@@ -162,6 +168,7 @@ func isOperator(token string) bool {
 	}
 }
 
+// isDigit checks if a byte is a digit.
 func isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
 }

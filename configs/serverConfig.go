@@ -1,3 +1,4 @@
+// Package configs provides configuration structures and functions for the server.
 package configs
 
 import (
@@ -6,16 +7,16 @@ import (
 	"strconv"
 )
 
-// ServerConfig holds all configuration for the server
+// ServerConfig holds all configuration for the server.
 type ServerConfig struct {
-	Port              string
-	TimeAdditionMS    int64
-	TimeSubtractionMS int64
-	TimeMultiplyMS    int64
-	TimeDivisionMS    int64
+	Port              string // Port on which the server will listen.
+	TimeAdditionMS    int64  // Time in milliseconds for addition operations.
+	TimeSubtractionMS int64  // Time in milliseconds for subtraction operations.
+	TimeMultiplyMS    int64  // Time in milliseconds for multiplication operations.
+	TimeDivisionMS    int64  // Time in milliseconds for division operations.
 }
 
-// NewServerConfig creates a new ServerConfig instance
+// NewServerConfig creates a new ServerConfig instance with values from environment variables or defaults.
 func NewServerConfig() (*ServerConfig, error) {
 	timeAdd, err := getEnvInt64("TIME_ADDITION_MS", 100)
 	if err != nil {
@@ -46,6 +47,7 @@ func NewServerConfig() (*ServerConfig, error) {
 	}, nil
 }
 
+// getEnvString retrieves a string value from the environment or returns a default value.
 func getEnvString(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -53,6 +55,7 @@ func getEnvString(key, defaultValue string) string {
 	return defaultValue
 }
 
+// getEnvInt64 retrieves an int64 value from the environment or returns a default value.
 func getEnvInt64(key string, defaultValue int64) (int64, error) {
 	if value, exists := os.LookupEnv(key); exists {
 		return strconv.ParseInt(value, 10, 64)

@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Agent представляет собой агента-вычислителя
+// Agent represents a computation agent.
 type Agent struct {
 	config     *configs.WorkerConfig
 	logger     *logger.Logger
@@ -23,7 +23,7 @@ type Agent struct {
 	cancel     context.CancelFunc
 }
 
-// New создает нового агента
+// New creates a new agent.
 func New(cfg *configs.WorkerConfig, log *logger.Logger) *Agent {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Agent{
@@ -37,7 +37,7 @@ func New(cfg *configs.WorkerConfig, log *logger.Logger) *Agent {
 	}
 }
 
-// Start запускает агента
+// Start launches the agent.
 func (a *Agent) Start() error {
 	a.logger.Info("Starting agent",
 		zap.Int(common.FieldComputingPower, a.config.ComputingPower),
@@ -51,7 +51,7 @@ func (a *Agent) Start() error {
 	return nil
 }
 
-// Stop останавливает агента
+// Stop stops the agent.
 func (a *Agent) Stop() {
 	a.cancel()
 	a.wg.Wait()

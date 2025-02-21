@@ -1,3 +1,4 @@
+// Package configs provides configuration structures and functions for the application.
 package configs
 
 import (
@@ -5,13 +6,15 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// LoggerConfig holds the configuration for the logger.
 type LoggerConfig struct {
-	Level      string
-	Encoding   string
-	OutputPath string
-	ErrorPath  string
+	Level      string // Level defines the logging level (e.g., debug, info, warn, error).
+	Encoding   string // Encoding specifies the format of the log output (e.g., json, console).
+	OutputPath string // OutputPath is the path where logs will be written.
+	ErrorPath  string // ErrorPath is the path where error logs will be written.
 }
 
+// NewLoggerConfig returns a new LoggerConfig with default settings.
 func NewLoggerConfig() *LoggerConfig {
 	return &LoggerConfig{
 		Level:      "debug",
@@ -21,6 +24,7 @@ func NewLoggerConfig() *LoggerConfig {
 	}
 }
 
+// BuildLogger creates and returns a new zap.Logger based on the LoggerConfig settings.
 func (c *LoggerConfig) BuildLogger() (*zap.Logger, error) {
 	level := zap.NewAtomicLevel()
 	if err := level.UnmarshalText([]byte(c.Level)); err != nil {

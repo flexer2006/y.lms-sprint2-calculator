@@ -1,3 +1,4 @@
+// Package storage provides functions to manage expressions in storage.
 package storage
 
 import (
@@ -10,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// SaveExpression saves an expression to storage.
 func (s *Storage) SaveExpression(expr *models.Expression) error {
 	if expr.ID == "" {
 		s.logger.Error("Failed to save expression: empty ID")
@@ -30,6 +32,7 @@ func (s *Storage) SaveExpression(expr *models.Expression) error {
 	return nil
 }
 
+// GetExpression retrieves an expression from storage by ID.
 func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	if value, ok := s.expressions.Load(id); ok {
 		s.logger.Debug("Expression retrieved",
@@ -41,6 +44,7 @@ func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	return nil, fmt.Errorf(common.ErrExpressionNotFound)
 }
 
+// UpdateExpressionStatus updates the status of an expression in storage.
 func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStatus) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -77,40 +81,43 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
+// UpdateExpressionResult updates the result of an expression in storage.
 func (s *Storage) UpdateExpressionResult(id string, result float64) error {
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
 
-		// Создаем копию для обновления
+		// Create a copy for updating
 		updated := *expr
 		updated.Result = &result
 		updated.Status = models.StatusComplete
 		updated.UpdatedAt = time.Now()
 
-		// Сохраняем обновленную версию
+		// Save the updated version
 		s.expressions.Store(id, &updated)
 		return nil
 	}
 	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
+// UpdateExpressionError updates the error of an expression in storage.
 func (s *Storage) UpdateExpressionError(id string, err string) error {
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
 
-		// Создаем копию для обновления
+		// Create a copy for updating
 		updated := *expr
 		updated.Error = err
 		updated.Status = models.StatusError
 		updated.UpdatedAt = time.Now()
 
-		// Сохраняем обновленную версию
+		// Save the updated version
 		s.expressions.Store(id, &updated)
 		return nil
 	}
 	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
 }
 
+// ListExpressions lists all expressions in storage.
 func (s *Storage) ListExpressions() []*models.Expression {
 	var expressions []*models.Expression
 	s.expressions.Range(func(key, value interface{}) bool {
@@ -122,6 +129,7 @@ func (s *Storage) ListExpressions() []*models.Expression {
 	return expressions
 }
 
+// isValidStatusTransition checks if a status transition is valid.
 func isValidStatusTransition(from, to models.ExpressionStatus) bool {
 	switch from {
 	case models.StatusPending:
@@ -129,8 +137,8 @@ func isValidStatusTransition(from, to models.ExpressionStatus) bool {
 	case models.StatusProgress:
 		return to == models.StatusComplete || to == models.StatusError
 	case models.StatusComplete, models.StatusError:
-		return false // Нельзя изменить статус после завершения или ошибки
+		return false // Cannot change status after completion or error
 	default:
-		return true // Разрешаем переход для новых выражений
+		return true // Allow transition for new expressions
 	}
 }

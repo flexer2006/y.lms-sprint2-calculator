@@ -1,6 +1,7 @@
+// Package common provides shared constants used across the application.
 package common
 
-// Common error messages
+// Error messages used throughout the application.
 const (
 	ErrInvalidRequestBody        = "Invalid request body"
 	ErrExpressionNotFound        = "Expression not found"
@@ -28,7 +29,7 @@ const (
 	ErrInvalidStatusTransition   = "invalid status transition from %s to %s"
 )
 
-// Common log messages
+// Log messages used for logging application events.
 const (
 	LogProcessingExpression       = "Processing expression"
 	LogTaskRetrieved              = "Task retrieved"
@@ -68,19 +69,19 @@ const (
 	LogTasksCreated               = "Tasks created successfully"
 )
 
-// Common HTTP headers and content types
+// HTTP headers and content types used in the application.
 const (
 	HeaderContentType = "Content-Type"
 	ContentTypeJSON   = "application/json"
 )
 
-// Common URL paths
+// URL paths used for API endpoints.
 const (
 	PathTask         = "/task"
 	PathInternalTask = "%s/internal/task"
 )
 
-// Common field names
+// Field names used in JSON and other data structures.
 const (
 	FieldCount           = "count"
 	FieldStatus          = "status"
@@ -104,7 +105,7 @@ const (
 	FieldID              = "id"
 )
 
-// Parser log messages
+// Parser log messages used during expression parsing.
 const (
 	LogUnexpectedEndExpr      = "Unexpected end of expression"
 	LogFailedParseParentheses = "Failed to parse expression in parentheses"
@@ -114,7 +115,7 @@ const (
 	LogUnexpectedToken        = "Unexpected token"
 )
 
-// Logger field names
+// Logger field names used in structured logging.
 const (
 	LogFieldTimestamp  = "timestamp"
 	LogFieldLevel      = "level"
@@ -124,7 +125,7 @@ const (
 	LogFieldStacktrace = "stacktrace"
 )
 
-// Error format patterns
+// Error format patterns used for wrapping errors.
 const (
 	ErrFormatWithWrap = "%s: %w"
 )

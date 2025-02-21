@@ -149,7 +149,6 @@ func TestAgent_Integration(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Создаем агента с коротким таймаутом для тестов
 	log, err := logger.New(logger.Options{
 		Level:       logger.Debug,
 		Encoding:    "json",
@@ -164,13 +163,11 @@ func TestAgent_Integration(t *testing.T) {
 		OrchestratorURL: server.URL,
 	}, log)
 
-	// Запускаем агента с таймаутом
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- agent.Start()
 	}()
 
-	// Проверяем запуск агента
 	select {
 	case err := <-errCh:
 		require.NoError(t, err)
@@ -180,7 +177,7 @@ func TestAgent_Integration(t *testing.T) {
 
 	defer func() {
 		agent.Stop()
-		// Ждем остановки агента
+
 		select {
 		case <-errCh:
 		case <-time.After(5 * time.Second):
@@ -188,7 +185,6 @@ func TestAgent_Integration(t *testing.T) {
 		}
 	}()
 
-	// Отправляем задачу
 	task := models.Task{
 		ID:            "test-task",
 		Operation:     "+",
@@ -203,7 +199,6 @@ func TestAgent_Integration(t *testing.T) {
 		t.Fatal("timeout sending task")
 	}
 
-	// Ждем результат с таймаутом
 	select {
 	case result := <-resultCh:
 		assert.Equal(t, task.ID, result.ID)
@@ -215,17 +210,15 @@ func TestAgent_Integration(t *testing.T) {
 
 func TestAgent_Config(t *testing.T) {
 	t.Parallel()
-	// Создаем копию текущих переменных окружения
+
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
 	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
 
-	// Ensure environment variables are restored after test
 	defer func() {
 		_ = os.Setenv("COMPUTING_POWER", originalComputingPower)
 		_ = os.Setenv("ORCHESTRATOR_URL", originalOrchestratorURL)
 	}()
 
-	// Устанавливаем переменные окружения для теста
 	require.NoError(t, os.Setenv("COMPUTING_POWER", "3"))
 	require.NoError(t, os.Setenv("ORCHESTRATOR_URL", "http://test:8080"))
 
@@ -238,7 +231,7 @@ func TestAgent_Config(t *testing.T) {
 
 func TestAgent_InvalidConfig(t *testing.T) {
 	t.Parallel()
-	// Создаем копию текущих переменных окружения
+
 	originalComputingPower := os.Getenv("COMPUTING_POWER")
 	originalOrchestratorURL := os.Getenv("ORCHESTRATOR_URL")
 	defer func() {
@@ -250,7 +243,6 @@ func TestAgent_InvalidConfig(t *testing.T) {
 		}
 	}()
 
-	// Тест с некорректным значением
 	if err := os.Setenv("COMPUTING_POWER", "invalid"); err != nil {
 		t.Fatalf("Failed to set COMPUTING_POWER: %v", err)
 	}
@@ -263,7 +255,6 @@ func TestAgent_InvalidConfig(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid COMPUTING_POWER value")
 	}
 
-	// Тест с нулевым значением
 	if err := os.Setenv("COMPUTING_POWER", "0"); err != nil {
 		t.Fatalf("Failed to set COMPUTING_POWER: %v", err)
 	}

@@ -1,3 +1,4 @@
+// Package main is the entry point for the orchestrator application.
 package main
 
 import (
@@ -16,8 +17,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// main initializes the logger, configuration, and starts the server.
+// It also handles graceful shutdown on receiving termination signals.
 func main() {
-	// Инициализируем логгер
+
 	opts := logger.DefaultOptions()
 	opts.LogDir = "logs/orchestrator"
 
@@ -31,20 +34,17 @@ func main() {
 			fmt.Fprintf(os.Stderr, common.ErrFailedSyncLogger, syncErr)
 		}
 	}()
-	// Загружаем конфигурацию сервера
+
 	cfg, err := configs.NewServerConfig()
 	if err != nil {
 		log.Fatal(common.ErrFailedInitConfig, zap.Error(err))
 	}
 
-	// Создаем и запускаем сервер
 	srv := server.New(cfg, log)
 
-	// Создаем контекст с отменой
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Запускаем сервер в отдельной горутине
 	go func() {
 		if err := srv.Start(); err != nil {
 			log.Fatal(common.ErrFailedStartServer, zap.Error(err))
@@ -53,10 +53,8 @@ func main() {
 
 	log.Info(common.LogOrchestratorStarted)
 
-	// Ожидаем сигнала завершения
 	<-ctx.Done()
 
-	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

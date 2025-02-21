@@ -1,3 +1,4 @@
+// Package calculation provides functions to parse and evaluate mathematical expressions.
 package calculation
 
 import (
@@ -10,12 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// Parser represents a mathematical expression parser
+// Parser represents a mathematical expression parser.
 type Parser struct {
-	tokens []string
-	pos    int
+	tokens []string // Tokens of the expression to be parsed.
+	pos    int      // Current position in the tokens slice.
 }
 
+// parse evaluates the entire expression and returns the result.
+// It ensures that all tokens are consumed and returns an error if unexpected tokens remain.
 func (p *Parser) parse() (float64, error) {
 	result, err := p.parseExpression()
 	if err != nil {
@@ -27,6 +30,7 @@ func (p *Parser) parse() (float64, error) {
 	return result, nil
 }
 
+// parseExpression parses addition and subtraction operations.
 func (p *Parser) parseExpression() (float64, error) {
 	left, err := p.parseTerm()
 	if err != nil {
@@ -55,6 +59,7 @@ func (p *Parser) parseExpression() (float64, error) {
 	return left, nil
 }
 
+// parseTerm parses multiplication, division, and modulo operations.
 func (p *Parser) parseTerm() (float64, error) {
 	left, err := p.parsePower()
 	if err != nil {
@@ -95,6 +100,7 @@ func (p *Parser) parseTerm() (float64, error) {
 	return left, nil
 }
 
+// parsePower parses exponentiation operations.
 func (p *Parser) parsePower() (float64, error) {
 	result, err := p.parseFactor()
 	if err != nil {
@@ -114,6 +120,7 @@ func (p *Parser) parsePower() (float64, error) {
 	return result, nil
 }
 
+// parseFactor parses individual factors, including numbers, parentheses, and negative signs.
 func (p *Parser) parseFactor() (float64, error) {
 	if p.pos >= len(p.tokens) {
 		if logger != nil {

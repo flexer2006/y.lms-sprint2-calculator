@@ -76,26 +76,21 @@ func TestLoggerLevels(t *testing.T) {
 	log, err := logger.New(opts)
 	require.NoError(t, err)
 
-	// Test different log levels
 	log.Debug("debug message")
 	log.Info("info message")
 	log.Warn("warn message")
 	log.Error("error message")
 
-	// Ensure logger is closed
 	require.NoError(t, log.Close())
 }
 
 func TestGlobalLogger(t *testing.T) {
 	t.Parallel()
 
-	// Get global logger
 	log1 := logger.GetLogger()
 	assert.NotNil(t, log1)
 
-	// Get another instance
 	log2 := logger.GetLogger()
 
-	// Verify that both instances are the same (singleton)
 	assert.Equal(t, log1, log2)
 }

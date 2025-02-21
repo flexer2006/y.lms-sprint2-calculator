@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Calculate выполняет вычисление
+// Calculate performs the calculation.
 func (a *Agent) Calculate(task *models.Task) float64 {
 	switch task.Operation {
 	case "+":

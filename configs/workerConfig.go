@@ -1,3 +1,4 @@
+// Package configs provides configuration structures and functions for the worker agent.
 package configs
 
 import (
@@ -6,13 +7,13 @@ import (
 	"strconv"
 )
 
-// WorkerConfig содержит конфигурацию агента
+// WorkerConfig contains the configuration for the worker agent.
 type WorkerConfig struct {
-	ComputingPower  int    // Количество воркеров
-	OrchestratorURL string // URL оркестратора
+	ComputingPower  int    // Number of workers.
+	OrchestratorURL string // URL of the orchestrator.
 }
 
-// NewWorkerConfig создает новую конфигурацию агента
+// NewWorkerConfig creates a new worker agent configuration.
 func NewWorkerConfig() (*WorkerConfig, error) {
 	power, err := getWorkerComputingPower()
 	if err != nil {
@@ -27,7 +28,7 @@ func NewWorkerConfig() (*WorkerConfig, error) {
 	}, nil
 }
 
-// getWorkerComputingPower получает количество воркеров из переменной окружения
+// getWorkerComputingPower retrieves the number of workers from the environment variable.
 func getWorkerComputingPower() (int, error) {
 	powerStr := getWorkerEnvString("COMPUTING_POWER", "1")
 	power, err := strconv.Atoi(powerStr)
@@ -40,7 +41,7 @@ func getWorkerComputingPower() (int, error) {
 	return power, nil
 }
 
-// getWorkerEnvString получает значение переменной окружения с значением по умолчанию
+// getWorkerEnvString retrieves an environment variable value with a default value.
 func getWorkerEnvString(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value

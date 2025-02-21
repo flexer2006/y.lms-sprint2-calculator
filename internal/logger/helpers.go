@@ -1,3 +1,4 @@
+// Package logger provides logging utilities and helpers for the application.
 package logger
 
 import (
@@ -5,20 +6,22 @@ import (
 	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// ctxKey is a custom type for context keys
+// ctxKey is a custom type for context keys.
 type ctxKey string
 
-// Context key constants
+// Context key constants used for logging context fields.
 const (
 	TraceIDKey       ctxKey = "trace_id"
 	RequestIDKey     ctxKey = "request_id"
 	CorrelationIDKey ctxKey = "correlation_id"
 )
 
+// newEncoderConfig creates a new zapcore.EncoderConfig with custom settings.
 func newEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:       common.LogFieldTimestamp,
@@ -38,6 +41,7 @@ func newEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
+// extractContextFields extracts logging fields from the context.
 func extractContextFields(ctx context.Context) []zapcore.Field {
 	var fields []zapcore.Field
 

@@ -1,3 +1,4 @@
+// Package server provides HTTP handlers for managing expressions and tasks.
 package server
 
 import (
@@ -13,6 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// handleCalculate processes a calculation request and initiates expression processing.
 func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	var req models.CalculateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -53,6 +55,7 @@ func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusCreated, models.CalculateResponse{ID: expr.ID})
 }
 
+// handleListExpressions lists all stored expressions.
 func (s *Server) handleListExpressions(w http.ResponseWriter, r *http.Request) {
 	exprPointers := s.storage.ListExpressions()
 	expressions := make([]models.Expression, len(exprPointers))
@@ -64,6 +67,7 @@ func (s *Server) handleListExpressions(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, models.ExpressionsResponse{Expressions: expressions})
 }
 
+// handleGetExpression retrieves a specific expression by ID.
 func (s *Server) handleGetExpression(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -82,6 +86,7 @@ func (s *Server) handleGetExpression(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, models.ExpressionResponse{Expression: *expr})
 }
 
+// handleGetTask retrieves the next available task.
 func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	task, err := s.storage.GetNextTask()
 	if err != nil {
@@ -96,6 +101,7 @@ func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, models.TaskResponse{Task: *task})
 }
 
+// handleSubmitTaskResult processes the result of a completed task.
 func (s *Server) handleSubmitTaskResult(w http.ResponseWriter, r *http.Request) {
 	var result models.TaskResult
 	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {

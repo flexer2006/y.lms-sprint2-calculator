@@ -53,7 +53,6 @@ func TestStorage_SaveExpression(t *testing.T) {
 			}
 			assert.NoError(t, err)
 
-			// Verify saved expression
 			saved, err := store.GetExpression(tt.expr.ID)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expr.Expression, saved.Expression)
@@ -68,11 +67,9 @@ func TestStorage_GetExpression(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	store := storage.New(logger)
 
-	// Test non-existent expression
 	_, err := store.GetExpression("non-existent")
 	assert.Error(t, err)
 
-	// Save and get expression
 	expr := &models.Expression{
 		ID:         "test-id-1",
 		Expression: "2+2",
@@ -89,11 +86,9 @@ func TestStorage_ListExpressions(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	store := storage.New(logger)
 
-	// Initial list should be empty
 	expressions := store.ListExpressions()
 	assert.Empty(t, expressions)
 
-	// Add some expressions
 	exprs := []*models.Expression{
 		{
 			ID:         "test-id-1",
@@ -111,7 +106,6 @@ func TestStorage_ListExpressions(t *testing.T) {
 		require.NoError(t, store.SaveExpression(expr))
 	}
 
-	// Check list
 	list := store.ListExpressions()
 	assert.Len(t, list, len(exprs))
 }
@@ -129,11 +123,9 @@ func TestStorage_SaveAndGetTask(t *testing.T) {
 		ExpressionID:  "expr-1",
 	}
 
-	// Test save
 	err := store.SaveTask(task)
 	require.NoError(t, err)
 
-	// Test get
 	saved, err := store.GetTask(task.ID)
 	require.NoError(t, err)
 	assert.Equal(t, task.ID, saved.ID)
@@ -148,11 +140,9 @@ func TestStorage_UpdateTaskResult(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	store := storage.New(logger)
 
-	// Try to update non-existent task
 	err := store.UpdateTaskResult("non-existent", 42.0)
 	assert.Error(t, err)
 
-	// Create and update task
 	task := &models.Task{
 		ID:            "task-1",
 		Arg1:          2.0,
@@ -166,7 +156,6 @@ func TestStorage_UpdateTaskResult(t *testing.T) {
 	result := 5.0
 	require.NoError(t, store.UpdateTaskResult(task.ID, result))
 
-	// Verify update
 	saved, err := store.GetTask(task.ID)
 	require.NoError(t, err)
 	assert.NotNil(t, saved.Result)
@@ -177,11 +166,9 @@ func TestStorage_GetNextTask(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	store := storage.New(logger)
 
-	// Initially should return error
 	_, err := store.GetNextTask()
 	assert.Error(t, err)
 
-	// Add tasks
 	tasks := []*models.Task{
 		{
 			ID:            "task-1",
@@ -205,7 +192,6 @@ func TestStorage_GetNextTask(t *testing.T) {
 		require.NoError(t, store.SaveTask(task))
 	}
 
-	// Get tasks in order
 	for _, expected := range tasks {
 		task, getErr := store.GetNextTask()
 		require.NoError(t, getErr)
@@ -561,27 +547,23 @@ func TestStorage_EdgeCases(t *testing.T) {
 	}
 	require.NoError(t, store.SaveExpression(expr))
 
-	// Test concurrent updates with valid status transitions
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			// First update: PENDING -> IN_PROGRESS
+
 			_ = store.UpdateExpressionStatus(expr.ID, models.StatusProgress)
 		}()
 	}
 	wg.Wait()
 
-	// Verify intermediate status
 	saved, err := store.GetExpression(expr.ID)
 	require.NoError(t, err)
 	assert.Equal(t, models.StatusProgress, saved.Status)
 
-	// Final update: IN_PROGRESS -> COMPLETE
 	require.NoError(t, store.UpdateExpressionResult(expr.ID, 2.0))
 
-	// Verify final status
 	saved, err = store.GetExpression(expr.ID)
 	require.NoError(t, err)
 	assert.Equal(t, models.StatusComplete, saved.Status)

@@ -40,7 +40,6 @@ func TestCalculator(t *testing.T) {
 			expected: 5,
 		},
 
-		// Сложные выражения с приоритетами
 		{
 			name:     "operator precedence multiplication over addition",
 			expr:     "2 + 3 * 4",
@@ -57,7 +56,6 @@ func TestCalculator(t *testing.T) {
 			expected: 12,
 		},
 
-		// Работа со скобками
 		{
 			name:     "simple parentheses",
 			expr:     "(2 + 3) * 4",
@@ -79,7 +77,6 @@ func TestCalculator(t *testing.T) {
 			expected: 45,
 		},
 
-		// Работа с отрицательными числами
 		{
 			name:     "negative number addition",
 			expr:     "-2 + 3",
@@ -111,7 +108,6 @@ func TestCalculator(t *testing.T) {
 			expected: -4.5,
 		},
 
-		// Работа с десятичными числами
 		{
 			name:     "decimal addition",
 			expr:     "2.5 + 3.7",
@@ -128,7 +124,6 @@ func TestCalculator(t *testing.T) {
 			expected: 10,
 		},
 
-		// Пробелы и форматирование
 		{
 			name:     "expression with spaces",
 			expr:     "  2  +  2  ",
@@ -140,7 +135,6 @@ func TestCalculator(t *testing.T) {
 			expected: 14,
 		},
 
-		// Крайние случаи и ошибки
 		{
 			name:    "empty expression",
 			expr:    "",
@@ -192,7 +186,6 @@ func TestCalculator(t *testing.T) {
 			wantErr: true,
 		},
 
-		// Очень длинные выражения
 		{
 			name:     "long expression",
 			expr:     "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10",
@@ -204,7 +197,6 @@ func TestCalculator(t *testing.T) {
 			expected: 71,
 		},
 
-		// Унарный минус в разных контекстах
 		{
 			name:     "unary minus at start",
 			expr:     "-2 * 3",
@@ -231,7 +223,6 @@ func TestCalculator(t *testing.T) {
 			expected: 8,
 		},
 
-		// Очень маленькие и большие числа
 		{
 			name:     "very small numbers",
 			expr:     "0.0000001 + 0.0000002",
@@ -243,7 +234,6 @@ func TestCalculator(t *testing.T) {
 			expected: 1000000000000,
 		},
 
-		// Комбинированные сложные случаи
 		{
 			name:     "complex mixed expression",
 			expr:     "((-2.5 + 3.7) * (-2 + 4.2)) / (2 * -0.5)",
@@ -257,7 +247,7 @@ func TestCalculator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := calculation.EvaluateExpression(tt.expr)
 

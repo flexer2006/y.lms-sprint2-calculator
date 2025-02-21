@@ -8,10 +8,11 @@ import (
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
+
 	"go.uber.org/zap"
 )
 
-// getTask получает задачу от оркестратора
+// getTask retrieves a task from the orchestrator.
 func (a *Agent) getTask() (*models.Task, error) {
 	resp, err := a.httpClient.Get(fmt.Sprintf(common.PathInternalTask, a.config.OrchestratorURL))
 	if err != nil {
@@ -24,7 +25,7 @@ func (a *Agent) getTask() (*models.Task, error) {
 	}()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil // Нет доступных задач
+		return nil, nil
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -39,7 +40,7 @@ func (a *Agent) getTask() (*models.Task, error) {
 	return &taskResp.Task, nil
 }
 
-// sendResult отправляет результат вычисления оркестратору
+// sendResult sends the calculation result to the orchestrator.
 func (a *Agent) sendResult(taskID string, result float64) error {
 	taskResult := models.TaskResult{
 		ID:     taskID,

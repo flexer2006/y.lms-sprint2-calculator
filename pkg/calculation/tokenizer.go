@@ -1,3 +1,4 @@
+// Package calculation provides functions to tokenize mathematical expressions.
 package calculation
 
 import (
@@ -5,7 +6,7 @@ import (
 	"strings"
 )
 
-// tokenize splits an expression string into tokens
+// tokenize splits an expression string into tokens.
 func tokenize(expression string) []string {
 	var tokens []string
 	var number strings.Builder
@@ -66,7 +67,7 @@ func tokenize(expression string) []string {
 	return tokens
 }
 
-// isOperator checks if a token is a valid operator
+// isOperator checks if a token is a valid operator.
 func isOperator(token string) bool {
 	switch token {
 	case "+", "-", "*", "/", "%", "^":
@@ -75,13 +76,13 @@ func isOperator(token string) bool {
 	return false
 }
 
-// isNumber checks if a string represents a valid number
+// isNumber checks if a string represents a valid number.
 func isNumber(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }
 
-// isDigit checks if a rune is a digit
+// isDigit checks if a rune is a digit.
 func isDigit(c rune) bool {
 	return c >= '0' && c <= '9'
 }

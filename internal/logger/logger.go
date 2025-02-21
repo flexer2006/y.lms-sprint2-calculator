@@ -1,3 +1,4 @@
+// Package logger provides a wrapper around zap.Logger with additional functionality.
 package logger
 
 import (
@@ -12,7 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Logger представляет собой обертку над zap.Logger
+// Logger is a wrapper around zap.Logger.
 type Logger struct {
 	*zap.Logger
 	sugar *zap.SugaredLogger
@@ -24,7 +25,7 @@ var (
 	once         sync.Once
 )
 
-// Close закрывает глобальный логгер и освобождает ресурсы
+// Close shuts down the global logger and releases resources.
 func Close() error {
 	if globalLogger != nil {
 		return globalLogger.Sync()
@@ -32,6 +33,7 @@ func Close() error {
 	return nil
 }
 
+// Fatal logs a fatal message and writes it to a file before exiting.
 func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 	if err := os.MkdirAll(l.opts.LogDir, 0755); err != nil {
 		l.Error("Failed to create logs directory", zap.Error(err))
@@ -72,11 +74,11 @@ func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
 	l.Logger.Fatal(msg, fields...)
 }
 
-// New создает новый логгер с указанными настройками
+// New creates a new logger with the specified options.
 func New(opts Options) (*Logger, error) {
 	config := zap.NewProductionConfig()
 
-	// Устанавливаем уровень логирования
+	// Set the logging level
 	switch opts.Level {
 	case Debug:
 		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
@@ -90,16 +92,16 @@ func New(opts Options) (*Logger, error) {
 		return nil, fmt.Errorf("unknown log level: %s", opts.Level)
 	}
 
-	// Настраиваем кодировку
+	// Configure encoding
 	config.Encoding = opts.Encoding
 	config.OutputPaths = opts.OutputPath
 	config.ErrorOutputPaths = opts.ErrorPath
 	config.Development = opts.Development
 
-	// Настраиваем формат времени
+	// Configure time format
 	config.EncoderConfig = newEncoderConfig()
 
-	// Создаем логгер
+	// Create the logger
 	logger, err := config.Build(
 		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
@@ -115,6 +117,7 @@ func New(opts Options) (*Logger, error) {
 	}, nil
 }
 
+// GetLogger returns the global logger instance, creating it if necessary.
 func GetLogger() *Logger {
 	once.Do(func() {
 		logger, err := New(DefaultOptions())
@@ -127,6 +130,7 @@ func GetLogger() *Logger {
 	return globalLogger
 }
 
+// WithContext returns a new Logger with fields extracted from the context.
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	fields := extractContextFields(ctx)
 	if len(fields) == 0 {
@@ -141,10 +145,12 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 	}
 }
 
+// Sugar returns the SugaredLogger for structured logging.
 func (l *Logger) Sugar() *zap.SugaredLogger {
 	return l.sugar
 }
 
+// Sync flushes any buffered log entries.
 func (l *Logger) Sync() error {
 	err1 := l.Logger.Sync()
 	err2 := l.sugar.Sync()
@@ -154,7 +160,7 @@ func (l *Logger) Sync() error {
 	return err2
 }
 
-// Close закрывает логгер и освобождает ресурсы
+// Close shuts down the logger and releases resources.
 func (l *Logger) Close() error {
 	return l.Sync()
 }

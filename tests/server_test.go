@@ -113,10 +113,9 @@ func TestServer_HandleCalculate(t *testing.T) {
 }
 
 func TestServer_HandleGetExpression(t *testing.T) {
-	// Remove t.Parallel() as this is an integration test
+
 	_, router := setupTestServer(t)
 
-	// Создаем выражение через API
 	body, err := json.Marshal(models.CalculateRequest{Expression: "2 + 2"})
 	require.NoError(t, err)
 
@@ -173,10 +172,9 @@ func TestServer_HandleGetExpression(t *testing.T) {
 }
 
 func TestServer_HandleListExpressions(t *testing.T) {
-	// Remove t.Parallel() as this is an integration test
+
 	_, router := setupTestServer(t)
 
-	// Создаем несколько выражений
 	expressions := []string{"2 + 2", "3 * 4", "10 - 5"}
 	for _, expr := range expressions {
 		body, err := json.Marshal(models.CalculateRequest{Expression: expr})
@@ -188,7 +186,6 @@ func TestServer_HandleListExpressions(t *testing.T) {
 		require.Equal(t, http.StatusCreated, w.Code)
 	}
 
-	// Тестируем получение списка выражений
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/expressions", nil)
 	w := httptest.NewRecorder()
 
@@ -206,7 +203,6 @@ func TestServer_HandleGetTask(t *testing.T) {
 	t.Parallel()
 	_, router := setupTestServer(t)
 
-	// Создаем выражение, которое создаст задачу
 	body, err := json.Marshal(models.CalculateRequest{Expression: "2 + 2"})
 	require.NoError(t, err)
 
@@ -215,7 +211,6 @@ func TestServer_HandleGetTask(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
 
-	// Тестируем получение задачи
 	req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -232,10 +227,9 @@ func TestServer_HandleGetTask(t *testing.T) {
 }
 
 func TestServer_HandleSubmitTaskResult(t *testing.T) {
-	// Remove t.Parallel() to avoid race conditions
+
 	_, router := setupTestServer(t)
 
-	// Create a test expression
 	body, err := json.Marshal(models.CalculateRequest{Expression: "2 + 2"})
 	require.NoError(t, err)
 
@@ -244,7 +238,6 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code)
 
-	// Wait for task to be available with timeout
 	var taskResp models.TaskResponse
 	timeout := time.After(2 * time.Second)
 	ticker := time.NewTicker(100 * time.Millisecond)
@@ -268,7 +261,7 @@ func TestServer_HandleSubmitTaskResult(t *testing.T) {
 	}
 
 taskFound:
-	// Submit task result
+
 	result := models.TaskResult{
 		ID:     taskResp.Task.ID,
 		Result: 4.0,
@@ -285,7 +278,6 @@ taskFound:
 func TestServer_Integration(t *testing.T) {
 	_, router := setupTestServer(t)
 
-	// 1. Создаем выражение
 	calcReq := models.CalculateRequest{Expression: "2 + 2"}
 	body, err := json.Marshal(calcReq)
 	require.NoError(t, err)
@@ -300,10 +292,8 @@ func TestServer_Integration(t *testing.T) {
 	require.NoError(t, err)
 	exprID := calcResp.ID
 
-	// Add a small delay to allow the processExpression goroutine to complete
 	time.Sleep(100 * time.Millisecond)
 
-	// 2. Получаем задачу
 	req = httptest.NewRequest(http.MethodGet, "/internal/task", nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -313,7 +303,6 @@ func TestServer_Integration(t *testing.T) {
 	err = json.NewDecoder(w.Body).Decode(&taskResp)
 	require.NoError(t, err)
 
-	// 3. Отправляем результат
 	result := models.TaskResult{
 		ID:     taskResp.Task.ID,
 		Result: 4.0,
@@ -326,7 +315,6 @@ func TestServer_Integration(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusOK, w.Code)
 
-	// 4. Проверяем статус выражения с таймаутом
 	timeout := time.After(5 * time.Second)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()

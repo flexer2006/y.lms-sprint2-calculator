@@ -1,9 +1,9 @@
-# Определение имен бинарников и каталога сборки
+# Definition of binary names and build directory
 AGENT_BINARY := agent
 ORCHESTRATOR_BINARY := orchestrator
 BUILD_DIR := build
 
-# Определение команд Go
+# Definition of Go commands
 GOCMD := go
 GOBUILD := $(GOCMD) build
 GOCLEAN := $(GOCMD) clean
@@ -11,16 +11,16 @@ GOTEST := $(GOCMD) test
 GOGET := $(GOCMD) get
 GOMOD := $(GOCMD) mod
 
-# Определение исходных файлов
+# Definition of source files
 AGENT_MAIN := cmd/agent/main.go
 ORCHESTRATOR_MAIN := cmd/orchestrator/main.go
 
-# Загрузка переменных из .env файла, если он существует
+# Load variables from .env file if it exists
 ifneq (,$(wildcard .env))
     include .env
 endif
 
-# Определение переменных окружения с значениями по умолчанию
+# Define environment variables with default values
 export COMPUTING_POWER ?= $(or $(COMPUTING_POWER),4)
 export TIME_ADDITION_MS ?= $(or $(TIME_ADDITION_MS),1000)
 export TIME_SUBTRACTION_MS ?= $(or $(TIME_SUBTRACTION_MS),1000)
@@ -29,14 +29,14 @@ export TIME_DIVISIONS_MS ?= $(or $(TIME_DIVISIONS_MS),2000)
 export ORCHESTRATOR_URL ?= http://localhost:8080
 export PORT ?= 8080
 
-# Создание каталога сборки, если он не существует
+# Create the build directory if it does not exist
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# Определение доступных команд
+# Definition of available commands
 .PHONY: all build clean test deps run run-dev run-prod check-deps test-short test-coverage lint stop run-agent run-orchestrator run-race help
 
-# Вывод списка доступных команд
+# Display the list of available commands
 help:
 	@echo "Available targets:"
 	@echo "  all              - clean, deps, build"
@@ -56,20 +56,20 @@ help:
 	@echo "  run-orchestrator - run orchestrator only"
 	@echo "  run-race         - run services with race detection"
 
-# Полный цикл сборки: очистка, установка зависимостей, сборка
+# Full build cycle: clean, install dependencies, build
 all: clean deps build
 
-# Загрузка и проверка зависимостей
+# Download and verify dependencies
 deps:
 	$(GOMOD) download
 	$(GOMOD) verify
 
-# Проверка зависимостей и исправление модуля
+# Check dependencies and fix the module
 check-deps:
 	$(GOCMD) mod tidy
 	$(GOCMD) mod verify
 
-# Сборка бинарников
+# Build binaries
 build: deps $(BUILD_DIR)
 	# Linux builds
 	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-linux-amd64 $(AGENT_MAIN)
@@ -87,12 +87,12 @@ build: deps $(BUILD_DIR)
 	$(GOBUILD) -o $(BUILD_DIR)/$(AGENT_BINARY)-macos-arm64 $(AGENT_MAIN)
 	$(GOBUILD) -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY)-macos-arm64 $(ORCHESTRATOR_MAIN)
 
-# Очистка сборочных артефактов
+# Clean build artifacts
 clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_DIR)
 
-# Запуск тестов с детекцией гонок и покрытием кода
+# Run tests with race detection and code coverage
 test:
 	$(GOTEST) -v -race -cover ./...
 
@@ -103,11 +103,11 @@ test-coverage:
 	$(GOTEST) -v -coverprofile=coverage.out ./...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 
-# Запуск статического анализатора кода
+# Run static code analyzer
 lint:
 	golangci-lint run ./...
 
-# Макрос для вывода переменных окружения
+# Macro for printing environment variables
 define print_env
 	@echo "Environment variables:"
 	@echo "  COMPUTING_POWER: $(COMPUTING_POWER)"
@@ -119,14 +119,14 @@ define print_env
 	@echo "  PORT: $(PORT)"
 endef
 
-# Запуск сервисов
+# Run services
 run: build
 	@echo "Starting services..."
 	$(print_env)
 	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
 	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
 
-# Запуск в режиме разработки с уменьшенными задержками
+# Run in development mode with reduced delays
 run-dev: export COMPUTING_POWER=2
 run-dev: export TIME_ADDITION_MS=100
 run-dev: export TIME_SUBTRACTION_MS=100
@@ -138,7 +138,7 @@ run-dev: build
 	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
 	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
 
-# Запуск в продакшн-режиме с увеличенной мощностью
+# Run in production mode with increased power
 run-prod: export COMPUTING_POWER=8
 run-prod: build
 	@echo "Starting services in production mode..."
@@ -146,7 +146,7 @@ run-prod: build
 	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY) & echo $$! > $(BUILD_DIR)/orchestrator.pid
 	@$(BUILD_DIR)/$(AGENT_BINARY) & echo $$! > $(BUILD_DIR)/agent.pid
 
-# Остановка сервисов
+# Stop services
 stop:
 	@if [ -f $(BUILD_DIR)/orchestrator.pid ]; then \
 		kill $$(cat $(BUILD_DIR)/orchestrator.pid) || true; \
@@ -157,20 +157,20 @@ stop:
 		rm $(BUILD_DIR)/agent.pid; \
 	fi
 
-# Запуск только агента
+# Run only the agent
 run-agent: build
 	@echo "Starting agent..."
 	$(print_env)
 	@$(BUILD_DIR)/$(AGENT_BINARY)
 
-# Запуск только оркестратора
+# Run only the orchestrator
 run-orchestrator: build
 	@echo "Starting orchestrator..."
 	@echo "Environment variables:"
 	@echo "  PORT: $(PORT)"
 	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)
 
-# Сборка и запуск с детекцией гонок
+# Build and run with race detection
 run-race: clean
 	$(GOBUILD) -race -o $(BUILD_DIR)/$(AGENT_BINARY) $(AGENT_MAIN)
 	$(GOBUILD) -race -o $(BUILD_DIR)/$(ORCHESTRATOR_BINARY) $(ORCHESTRATOR_MAIN)
