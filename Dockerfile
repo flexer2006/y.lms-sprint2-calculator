@@ -31,8 +31,8 @@ RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /app/build/orchestrator-m
 RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /app/build/agent-macos-arm64 cmd/agent/main.go
 RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /app/build/orchestrator-macos-arm64 cmd/orchestrator/main.go
 
-# Final stage (Linux only, default to amd64)
-FROM alpine:latest
+# Final stage for orchestrator
+FROM alpine:latest AS orchestrator
 
 # Install necessary runtime dependencies
 RUN apk --no-cache add ca-certificates
@@ -40,9 +40,35 @@ RUN apk --no-cache add ca-certificates
 # Set working directory
 WORKDIR /app
 
-# Copy only Linux amd64 binaries (default for container)
-COPY --from=builder /app/build/agent-linux-amd64 /app/agent
+# Copy only Linux amd64 orchestrator binary
 COPY --from=builder /app/build/orchestrator-linux-amd64 /app/orchestrator
+
+# Copy environment variables file
+COPY .env ./
+
+# Set default environment variables
+ENV PORT=8080
+
+# Expose the port
+EXPOSE 8080
+
+# Create directory for logs
+RUN mkdir -p /app/logs/orchestrator
+
+# Start orchestrator service
+CMD ["/bin/sh", "-c", "source .env 2>/dev/null || true; /app/orchestrator"]
+
+# Final stage for agent
+FROM alpine:latest AS agent
+
+# Install necessary runtime dependencies
+RUN apk --no-cache add ca-certificates
+
+# Set working directory
+WORKDIR /app
+
+# Copy only Linux amd64 agent binary
+COPY --from=builder /app/build/agent-linux-amd64 /app/agent
 
 # Copy environment variables file
 COPY .env ./
@@ -53,14 +79,10 @@ ENV COMPUTING_POWER=4 \
     TIME_SUBTRACTION_MS=1000 \
     TIME_MULTIPLICATIONS_MS=2000 \
     TIME_DIVISIONS_MS=2000 \
-    ORCHESTRATOR_URL=http://localhost:8080 \
-    PORT=8080
-
-# Expose the port
-EXPOSE 8080
+    ORCHESTRATOR_URL=http://localhost:8080
 
 # Create directory for logs
-RUN mkdir -p /app/logs/agent /app/logs/orchestrator
+RUN mkdir -p /app/logs/agent
 
-# Start both services
-CMD ["/bin/sh", "-c", "source .env 2>/dev/null || true; /app/orchestrator & /app/agent"]
+# Start agent service
+CMD ["/bin/sh", "-c", "source .env 2>/dev/null || true; /app/agent"]
