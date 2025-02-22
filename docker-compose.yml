@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: .  # Context for the build, typically the current directory
+      dockerfile: Dockerfile  # Path to the Dockerfile
+      target: orchestrator  # Specify the build stage for orchestrator
+    ports:
+      - "8080:8080"  # Expose port 8080 on the host and map it to port 8080 inside the container
+    env_file:
+      - .env  # Load environment variables from the .env file
+    volumes:
+      - ./logs/orchestrator:/app/logs/orchestrator  # Mount host directory for logs to the container's log directory
+    networks:
+      - app_network  # Attach the container to the app_network
+
+  agent:
+    build:
+      context: .  # Context for the build, typically the current directory
+      dockerfile: Dockerfile  # Path to the Dockerfile
+      target: agent  # Specify the build stage for agent
+    env_file:
+      - .env  # Load environment variables from the .env file
+    volumes:
+      - ./logs/agent:/app/logs/agent  # Mount host directory for logs to the container's log directory
+    networks:
+      - app_network  # Attach the container to the app_network
+
+networks:
+  app_network:
+    driver: bridge  # Specify the network driver, here 'bridge' is used for local networking

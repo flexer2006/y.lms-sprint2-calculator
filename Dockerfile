@@ -13,23 +13,13 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build for Linux (static binaries)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/agent-linux-amd64 cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/orchestrator-linux-amd64 cmd/orchestrator/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /app/build/agent-linux-arm64 cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /app/build/orchestrator-linux-arm64 cmd/orchestrator/main.go
+# Define ARGs for OS and architecture (they будут передаваться через build аргументы)
+ARG TARGETOS
+ARG TARGETARCH
 
-# Build for Windows (static binaries)
-RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o /app/build/agent-windows-amd64.exe cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o /app/build/orchestrator-windows-amd64.exe cmd/orchestrator/main.go
-RUN CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o /app/build/agent-windows-arm64.exe cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o /app/build/orchestrator-windows-arm64.exe cmd/orchestrator/main.go
-
-# Build for macOS (static binaries)
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /app/build/agent-macos-amd64 cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /app/build/orchestrator-macos-amd64 cmd/orchestrator/main.go
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /app/build/agent-macos-arm64 cmd/agent/main.go
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o /app/build/orchestrator-macos-arm64 cmd/orchestrator/main.go
+# Build for the specified OS and architecture
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/build/agent-$TARGETOS-$TARGETARCH cmd/agent/main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/build/orchestrator-$TARGETOS-$TARGETARCH cmd/orchestrator/main.go
 
 # Final stage for orchestrator
 FROM alpine:latest AS orchestrator
@@ -40,8 +30,8 @@ RUN apk --no-cache add ca-certificates
 # Set working directory
 WORKDIR /app
 
-# Copy only Linux amd64 orchestrator binary
-COPY --from=builder /app/build/orchestrator-linux-amd64 /app/orchestrator
+# Copy orchestrator binary from builder, dynamically selecting based on target OS and architecture
+COPY --from=builder /app/build/orchestrator-${TARGETOS}-${TARGETARCH} /app/orchestrator
 
 # Copy environment variables file
 COPY .env ./
@@ -67,8 +57,8 @@ RUN apk --no-cache add ca-certificates
 # Set working directory
 WORKDIR /app
 
-# Copy only Linux amd64 agent binary
-COPY --from=builder /app/build/agent-linux-amd64 /app/agent
+# Copy agent binary from builder, dynamically selecting based on target OS and architecture
+COPY --from=builder /app/build/agent-${TARGETOS}-${TARGETARCH} /app/agent
 
 # Copy environment variables file
 COPY .env ./
