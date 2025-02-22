@@ -399,7 +399,8 @@ curl --location 'http://localhost:8080/api/v1/expressions'
 ### Postman
 
 Вы можете использовать Postman для проверки проекта:
-![[Pasted image 20250221114952.png]]
+![Pasted image 20250221114952](https://github.com/user-attachments/assets/a371d09d-d783-472e-af80-e1898432c25e)
+
 
 ### Структура проекта
 
@@ -455,4 +456,6 @@ go tool cover -html=coverage.out
    - Убедитесь, что порты не заблокированы файрволом
 
 ## Схема
+![image](https://github.com/user-attachments/assets/3dcb8d5b-05f9-4878-bb07-5f1513920965)
+
 
