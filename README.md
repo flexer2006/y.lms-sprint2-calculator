@@ -71,34 +71,37 @@ cd y.lms-sprint2-calculator
 
 #### 1. Сборка образов
 
-**Соберите образ оркестратора:**
-```
-docker build -t calculator-orchestrator -f Dockerfile --target orchestrator .
-```
-Эта команда создает образ для сервиса-оркестратора, который управляет распределением вычислений.
+##### Сборка для конкретной платформы:
 
-**Соберите образ агента:**
-```
-docker build -t calculator-agent -f Dockerfile --target agent .
-```
-Эта команда создает образ для сервиса-агента, который выполняет вычисления.
+**Сборка отдельных образов по целевым этапам**
 
+```
+docker build --target orchestrator -t my-app-orchestrator .
+```
+```
+docker build --target agent -t my-app-agent .
+```
 #### 2. Запуск контейнеров
 
 **Запустите оркестратор:**
 ```
-docker run -d -p 8080:8080 --name orchestrator calculator-orchestrator
+docker run -d -p 8080:8080 --name orchestrator my-app-orchestrator
 ```
 Флаги:
 - `-d`: запуск в фоновом режиме
 - `-p 8080:8080`: проброс порта 8080 из контейнера на хост
 - `--name orchestrator`: имя контейнера
+**С использованием сети (рекомендуемый способ):**
+```
+docker network create calculator-network
+docker run -d -p 8080:8080 --name orchestrator --network calculator-network calculator-orchestrator
+```
 
 **Запустите одного или несколько агентов:**
 ```
-docker run -d --name agent1 calculator-agent
-docker run -d --name agent2 calculator-agent
-docker run -d --name agent3 calculator-agent
+docker run -d --name agent1 my-app-agent
+docker run -d --name agent2 my-app-agent
+docker run -d --name agent3 my-app-agent
 ```
 Вы можете запустить столько агентов, сколько необходимо для обработки нагрузки.
 
