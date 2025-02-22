@@ -3,14 +3,14 @@
 
     WORKDIR /app
     
-    # Копируем файлы зависимостей и загружаем их
+    # Copy dependency files and download them
     COPY go.mod go.sum ./
     RUN go mod download
     
-    # Копируем исходный код
+    # Copy the source code
     COPY . .
     
-    # Сборка Linux-AMD64 бинарников для agent и orchestrator
+    # Build Linux-AMD64 binaries for agent and orchestrator
     RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/agent-linux-amd64 cmd/agent/main.go && \
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/orchestrator-linux-amd64 cmd/orchestrator/main.go
     
@@ -22,13 +22,13 @@
     
     WORKDIR /app
     
-    # Копируем бинарник orchestrator из builder
+    # Copy the orchestrator binary from builder
     COPY --from=builder /app/build/orchestrator-linux-amd64 /app/orchestrator
     
-    # Задаём переменные окружения для orchestrator
+    # Set environment variables for orchestrator
     ENV PORT=8080
     
-    # Запуск orchestrator
+    # Start orchestrator
     CMD ["/app/orchestrator"]
     
     # --- Final Stage: agent ---
@@ -39,10 +39,10 @@
     
     WORKDIR /app
     
-    # Копируем бинарник agent из builder
+    # Copy the agent binary from builder
     COPY --from=builder /app/build/agent-linux-amd64 /app/agent
     
-    # Задаём переменные окружения для agent (значения берутся из вашего .env)
+    # Set environment variables for agent (values are taken from your .env file)
     ENV COMPUTING_POWER=4 \
         TIME_ADDITION_MS=1000 \
         TIME_SUBTRACTION_MS=1000 \
@@ -50,6 +50,6 @@
         TIME_DIVISIONS_MS=2000 \
         ORCHESTRATOR_URL=http://localhost:8080
     
-    # Запуск agent
+    # Start agent
     CMD ["/app/agent"]
     
