@@ -14,16 +14,6 @@ type LoggerConfig struct {
 	ErrorPath  string // ErrorPath is the path where error logs will be written.
 }
 
-// NewLoggerConfig returns a new LoggerConfig with default settings.
-func NewLoggerConfig() *LoggerConfig {
-	return &LoggerConfig{
-		Level:      "debug",
-		Encoding:   "json",
-		OutputPath: "stdout",
-		ErrorPath:  "stderr",
-	}
-}
-
 // BuildLogger creates and returns a new zap.Logger based on the LoggerConfig settings.
 func (c *LoggerConfig) BuildLogger() (*zap.Logger, error) {
 	level := zap.NewAtomicLevel()

@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// handleCalculate processes a calculation request and initiates expression processing.
+// / handleCalculate processes a calculation request and initiates expression processing.
 func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	var req models.CalculateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -27,6 +27,18 @@ func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	if req.Expression == "" {
 		s.logger.Warn("Empty expression received")
 		s.writeError(w, http.StatusUnprocessableEntity, common.ErrInvalidRequestBody)
+		return
+	}
+
+	// Validate expression before processing
+	_, err := s.parseExpression(req.Expression)
+	if err != nil {
+		s.logger.Error(common.LogFailedParseExpression,
+			zap.String(common.FieldExpression, req.Expression),
+			zap.Error(err))
+
+		// Return error without creating expression object
+		s.writeError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -56,7 +68,7 @@ func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleListExpressions lists all stored expressions.
-func (s *Server) handleListExpressions(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleListExpressions(w http.ResponseWriter, _ *http.Request) {
 	exprPointers := s.storage.ListExpressions()
 	expressions := make([]models.Expression, len(exprPointers))
 	for i, expr := range exprPointers {
@@ -87,7 +99,7 @@ func (s *Server) handleGetExpression(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleGetTask retrieves the next available task.
-func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetTask(w http.ResponseWriter, _ *http.Request) {
 	task, err := s.storage.GetNextTask()
 	if err != nil {
 		s.logger.Debug(common.LogNoTasksAvailable)

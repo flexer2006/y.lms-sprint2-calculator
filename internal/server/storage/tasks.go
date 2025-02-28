@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
@@ -41,7 +42,7 @@ func (s *Storage) GetTask(id string) (*models.Task, error) {
 	}
 	s.logger.Warn("Task not found",
 		zap.String("id", id))
-	return nil, fmt.Errorf(common.ErrTaskNotFound)
+	return nil, fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
 }
 
 func (s *Storage) UpdateTaskResult(id string, result float64) error {
@@ -77,7 +78,7 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 	}
 	s.logger.Error("Failed to update task result: task not found",
 		zap.String("id", id))
-	return fmt.Errorf(common.ErrTaskNotFound)
+	return fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
 }
 
 func (s *Storage) GetNextTask() (*models.Task, error) {
@@ -86,7 +87,7 @@ func (s *Storage) GetNextTask() (*models.Task, error) {
 
 	if len(s.taskQueue) == 0 {
 		s.logger.Debug("No tasks available in queue")
-		return nil, fmt.Errorf(common.ErrTaskNotFound)
+		return nil, fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
 	}
 
 	task := s.taskQueue[0]

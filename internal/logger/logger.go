@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -19,19 +18,6 @@ type Logger struct {
 	sugar *zap.SugaredLogger
 	opts  Options
 	Fatal func(msg string, fields ...zapcore.Field) // Add this field
-}
-
-var (
-	globalLogger *Logger
-	once         sync.Once
-)
-
-// Close shuts down the global logger and releases resources.
-func Close() error {
-	if globalLogger != nil {
-		return globalLogger.Sync()
-	}
-	return nil
 }
 
 // Fatal logs a fatal message and writes it to a file before exiting.
@@ -122,19 +108,6 @@ func New(opts Options) (*Logger, error) {
 	l.Fatal = l.defaultFatal
 
 	return l, nil
-}
-
-// GetLogger returns the global logger instance, creating it if necessary.
-func GetLogger() *Logger {
-	once.Do(func() {
-		logger, err := New(DefaultOptions())
-		if err != nil {
-			fmt.Printf("Failed to create logger: %v\n", err)
-			os.Exit(1)
-		}
-		globalLogger = logger
-	})
-	return globalLogger
 }
 
 // WithContext returns a new Logger with fields extracted from the context.

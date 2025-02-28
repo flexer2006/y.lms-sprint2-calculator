@@ -9,11 +9,6 @@ import (
 
 var logger *zap.Logger
 
-// InitLogger initializes the logger for the calculation package.
-func InitLogger(l *zap.Logger) {
-	logger = l
-}
-
 // EvaluateExpression evaluates a mathematical expression and returns the result.
 // It returns an error if the expression is empty or invalid.
 func EvaluateExpression(expression string) (float64, error) {

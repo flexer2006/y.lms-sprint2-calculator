@@ -3,6 +3,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
@@ -41,7 +42,7 @@ func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	}
 	s.logger.Warn("Expression not found",
 		zap.String(common.FieldID, id))
-	return nil, fmt.Errorf(common.ErrExpressionNotFound)
+	return nil, fmt.Errorf(strings.ToLower(common.ErrExpressionNotFound))
 }
 
 // UpdateExpressionStatus updates the status of an expression in storage.

@@ -19,7 +19,6 @@ const (
 	ErrInvalidModulo             = "modulo operation requires integer operands"
 	ErrUnexpectedEndExpr         = "unexpected end of expression"
 	ErrMissingCloseParen         = "missing closing parenthesis"
-	ErrInvalidNumber             = "invalid number: %s"
 	ErrExpressionNotFoundStorage = "expression not found"
 	ErrFailedProcessExpression   = "Failed to process expression"
 	ErrFailedProcessResult       = "Failed to process result"
@@ -34,20 +33,9 @@ const (
 	LogProcessingExpression       = "Processing expression"
 	LogTaskRetrieved              = "Task retrieved"
 	LogExpressionRetrieved        = "Expression retrieved"
-	LogAgentStarting              = "Starting agent"
 	LogAgentStarted               = "Agent service started successfully"
 	LogAgentStoppedGrace          = "Agent service stopped gracefully"
-	LogAgentStopped               = "Agent stopped"
-	LogWorkerStarting             = "Starting worker"
-	LogWorkerStopped              = "Worker stopped"
-	LogProcessingTask             = "Processing task"
-	LogFailedProcessTask          = "Failed to process task"
-	LogFailedGetTask              = "failed to get task"
 	LogFailedSendResult           = "failed to send result"
-	LogEmptyExpression            = "Empty expression received"
-	LogFailedDecodeBody           = "Failed to decode request body"
-	LogFailedSaveExpr             = "Failed to save expression"
-	LogExpressionReceived         = "Expression received for calculation"
 	LogNoTasksAvailable           = "No tasks available"
 	LogFailedDecodeTask           = "Failed to decode task result"
 	LogFailedUpdateTask           = "Failed to update task result"
@@ -56,17 +44,12 @@ const (
 	LogTaskProcessed              = "Task result processed successfully"
 	LogOrchestratorStarted        = "Orchestrator service started successfully"
 	LogOrchestratorStoppedGrace   = "Orchestrator service stopped gracefully"
-	LogFailedSaveEmptyID          = "Failed to save expression: empty ID"
-	LogExpressionSaved            = "Expression saved successfully"
 	LogInvalidStatusTransition    = "Invalid status transition"
 	LogExpressionStatusUpdated    = "Expression status updated"
 	LogFailedUpdateStatusNotFound = "Failed to update expression status: expression not found"
 	LogListedAllExpressions       = "Listed all expressions"
-	LogExpressionNotFound         = "Expression not found"
 	LogFailedParseExpression      = "Failed to parse expression"
 	LogNoValidTasksCreated        = "No valid tasks created"
-	LogFailedSaveTask             = "Failed to save task"
-	LogTasksCreated               = "Tasks created successfully"
 )
 
 // HTTP headers and content types used in the application.
@@ -125,7 +108,6 @@ const (
 	LogFieldStacktrace = "stacktrace"
 )
 
-// Error format patterns used for wrapping errors.
 const (
 	ErrFormatWithWrap = "%s: %w"
 )
