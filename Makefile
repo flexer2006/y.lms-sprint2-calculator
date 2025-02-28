@@ -63,7 +63,7 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 # Available commands
-.PHONY: all build clean test deps run run-dev run-prod check-deps test-short test-coverage lint stop run-agent run-orchestrator run-race help
+.PHONY: all build clean test deps run run-dev run-prod check-deps test-short test-coverage lint stop run-agent run-orchestrator run-race help docker-build docker-run docker-stop docker-clean docker-dev docker-prod
 
 help:
 	@echo "Available targets:"
@@ -83,6 +83,12 @@ help:
 	@echo "  run-agent        - run agent only"
 	@echo "  run-orchestrator - run orchestrator only"
 	@echo "  run-race         - run services with race detection"
+	@echo "  docker-build     - build Docker images"
+	@echo "  docker-run       - run Docker containers"
+	@echo "  docker-stop      - stop Docker containers"
+	@echo "  docker-clean     - clean Docker resources"
+	@echo "  docker-dev       - run Docker containers in development mode"
+	@echo "  docker-prod      - run Docker containers in production mode"
 
 all: clean deps build
 
@@ -183,3 +189,28 @@ run-race: clean
 	@echo "Starting services with race detection..."
 	@$(BUILD_DIR)/$(ORCHESTRATOR_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/orchestrator.pid
 	@$(BUILD_DIR)/$(AGENT_BINARY)$(BINARY_SUFFIX) & echo $$! > $(BUILD_DIR)/agent.pid
+
+# Docker commands
+docker-build:
+	docker-compose build
+
+docker-run:
+	docker-compose up -d
+
+docker-stop:
+	docker-compose down
+
+docker-clean:
+	docker-compose down --rmi all --volumes --remove-orphans
+
+docker-dev: export COMPUTING_POWER=2
+docker-dev: export TIME_ADDITION_MS=100
+docker-dev: export TIME_SUBTRACTION_MS=100
+docker-dev: export TIME_MULTIPLICATIONS_MS=200
+docker-dev: export TIME_DIVISIONS_MS=200
+docker-dev:
+	docker-compose up -d
+
+docker-prod: export COMPUTING_POWER=8
+docker-prod:
+	docker-compose up -d

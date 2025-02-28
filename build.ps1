@@ -39,6 +39,12 @@ function Show-Help {
     Write-Host "  run-dev          - Run in development mode"
     Write-Host "  run-prod         - Run in production mode"
     Write-Host "  stop             - Stop running services"
+    Write-Host "  docker-build     - Build Docker images"
+    Write-Host "  docker-run       - Run Docker containers"
+    Write-Host "  docker-stop      - Stop Docker containers"
+    Write-Host "  docker-clean     - Clean Docker resources"
+    Write-Host "  docker-dev       - Run Docker containers in development mode"
+    Write-Host "  docker-prod      - Run Docker containers in production mode"
 }
 
 function Build {
@@ -79,6 +85,42 @@ function Stop {
     Get-Process | Where-Object { $_.ProcessName -match 'agent|orchestrator' } | Stop-Process -Force
 }
 
+function Docker-Build {
+    Write-Host "Building Docker images..."
+    docker-compose build
+}
+
+function Docker-Run {
+    Write-Host "Starting Docker containers..."
+    docker-compose up -d
+}
+
+function Docker-Stop {
+    Write-Host "Stopping Docker containers..."
+    docker-compose down
+}
+
+function Docker-Clean {
+    Write-Host "Cleaning Docker resources..."
+    docker-compose down --rmi all --volumes --remove-orphans
+}
+
+function Docker-Dev {
+    Write-Host "Starting Docker containers in development mode..."
+    $env:COMPUTING_POWER = 2
+    $env:TIME_ADDITION_MS = 100
+    $env:TIME_SUBTRACTION_MS = 100
+    $env:TIME_MULTIPLICATIONS_MS = 200
+    $env:TIME_DIVISIONS_MS = 200
+    docker-compose up -d
+}
+
+function Docker-Prod {
+    Write-Host "Starting Docker containers in production mode..."
+    $env:COMPUTING_POWER = 8
+    docker-compose up -d
+}
+
 # Command Execution
 switch ($Command) {
     "help" { Show-Help }
@@ -88,5 +130,11 @@ switch ($Command) {
     "run-dev" { RunDev }
     "run-prod" { RunProd }
     "stop" { Stop }
+    "docker-build" { Docker-Build }
+    "docker-run" { Docker-Run }
+    "docker-stop" { Docker-Stop }
+    "docker-clean" { Docker-Clean }
+    "docker-dev" { Docker-Dev }
+    "docker-prod" { Docker-Prod }
     default { Write-Host "Unknown command. Use 'help' to see available commands." }
 }

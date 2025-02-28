@@ -1,0 +1,34 @@
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependency files and download them
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code
+COPY . .
+
+# Build agent binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/agent cmd/agent/main.go
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates && \
+    mkdir -p /app/logs/agent
+
+WORKDIR /app
+
+# Copy the agent binary from builder
+COPY --from=builder /app/build/agent /app/agent
+
+# Set environment variables for agent
+ENV COMPUTING_POWER=4 \
+    TIME_ADDITION_MS=1000 \
+    TIME_SUBTRACTION_MS=1000 \
+    TIME_MULTIPLICATIONS_MS=2000 \
+    TIME_DIVISIONS_MS=2000 \
+    ORCHESTRATOR_URL=http://orchestrator:8080
+
+# Start agent
+CMD ["/app/agent"]

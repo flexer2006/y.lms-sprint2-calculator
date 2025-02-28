@@ -1,0 +1,32 @@
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependency files and download them
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code
+COPY . .
+
+# Build orchestrator binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/build/orchestrator cmd/orchestrator/main.go
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates && \
+    mkdir -p /app/logs/orchestrator
+
+WORKDIR /app
+
+# Copy the orchestrator binary from builder
+COPY --from=builder /app/build/orchestrator /app/orchestrator
+
+# Set environment variables for orchestrator
+ENV PORT=8080
+
+# Expose the port
+EXPOSE 8080
+
+# Start orchestrator
+CMD ["/app/orchestrator"]
