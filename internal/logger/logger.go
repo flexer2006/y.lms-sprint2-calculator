@@ -20,7 +20,6 @@ type Logger struct {
 	Fatal func(msg string, fields ...zapcore.Field) // Add this field
 }
 
-// Fatal logs a fatal message and writes it to a file before exiting.
 // defaultFatal is the default implementation of Fatal
 func (l *Logger) defaultFatal(msg string, fields ...zapcore.Field) {
 	if err := os.MkdirAll(l.opts.LogDir, 0755); err != nil {
@@ -51,14 +50,11 @@ func (l *Logger) defaultFatal(msg string, fields ...zapcore.Field) {
 	combinedCore := zapcore.NewTee(l.Core(), fileCore)
 	logger := zap.New(combinedCore)
 
-	// Write the message and ensure it's synced to disk
 	logger.Fatal(msg, fields...)
 	if err := logger.Sync(); err != nil {
 		l.Error("Failed to sync fatal log", zap.Error(err))
 	}
 
-	// This line will never be reached due to os.Exit in Fatal,
-	// but we keep it as a fallback
 	l.Logger.Fatal(msg, fields...)
 }
 
@@ -80,16 +76,13 @@ func New(opts Options) (*Logger, error) {
 		return nil, fmt.Errorf("unknown log level: %s", opts.Level)
 	}
 
-	// Configure encoding
 	config.Encoding = opts.Encoding
 	config.OutputPaths = opts.OutputPath
 	config.ErrorOutputPaths = opts.ErrorPath
 	config.Development = opts.Development
 
-	// Configure time format
 	config.EncoderConfig = newEncoderConfig()
 
-	// Create the logger
 	logger, err := config.Build(
 		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
@@ -104,7 +97,6 @@ func New(opts Options) (*Logger, error) {
 		opts:   opts,
 	}
 
-	// Set the default Fatal implementation
 	l.Fatal = l.defaultFatal
 
 	return l, nil

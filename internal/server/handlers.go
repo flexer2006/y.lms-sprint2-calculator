@@ -30,14 +30,12 @@ func (s *Server) handleCalculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate expression before processing
 	_, err := s.parseExpression(req.Expression)
 	if err != nil {
 		s.logger.Error(common.LogFailedParseExpression,
 			zap.String(common.FieldExpression, req.Expression),
 			zap.Error(err))
 
-		// Return error without creating expression object
 		s.writeError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}

@@ -45,7 +45,6 @@ func newEncoderConfig() zapcore.EncoderConfig {
 func extractContextFields(ctx context.Context) []zapcore.Field {
 	var fields []zapcore.Field
 
-	// Extract context values using both string and custom key types
 	if traceID := ctx.Value(TraceIDKey); traceID != nil {
 		fields = append(fields, zap.String(common.FieldTraceID, traceID.(string)))
 	} else if traceID := ctx.Value(string(TraceIDKey)); traceID != nil {
