@@ -18,6 +18,7 @@ type Logger struct {
 	*zap.Logger
 	sugar *zap.SugaredLogger
 	opts  Options
+	Fatal func(msg string, fields ...zapcore.Field) // Add this field
 }
 
 var (
@@ -34,7 +35,8 @@ func Close() error {
 }
 
 // Fatal logs a fatal message and writes it to a file before exiting.
-func (l *Logger) Fatal(msg string, fields ...zapcore.Field) {
+// defaultFatal is the default implementation of Fatal
+func (l *Logger) defaultFatal(msg string, fields ...zapcore.Field) {
 	if err := os.MkdirAll(l.opts.LogDir, 0755); err != nil {
 		l.Error("Failed to create logs directory", zap.Error(err))
 	}
@@ -110,11 +112,16 @@ func New(opts Options) (*Logger, error) {
 		return nil, fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	return &Logger{
+	l := &Logger{
 		Logger: logger,
 		sugar:  logger.Sugar(),
 		opts:   opts,
-	}, nil
+	}
+
+	// Set the default Fatal implementation
+	l.Fatal = l.defaultFatal
+
+	return l, nil
 }
 
 // GetLogger returns the global logger instance, creating it if necessary.
