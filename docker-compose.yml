@@ -12,6 +12,7 @@ services:
       - PORT=${PORT:-8080}
     volumes:
       - ./logs:/app/logs
+      - ./web:/app/web
     networks:
       - calculator-network
 
@@ -19,7 +20,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile2
-    container_name: calculator-agent
     environment:
       - COMPUTING_POWER=${COMPUTING_POWER:-4}
       - TIME_ADDITION_MS=${TIME_ADDITION_MS:-1000}

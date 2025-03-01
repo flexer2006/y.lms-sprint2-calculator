@@ -3,13 +3,12 @@ package server
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"strconv"
+	"strings"
 )
 
 // processExpression processes a given mathematical expression by creating tasks.
@@ -73,40 +72,116 @@ func (s *Server) processExpression(expr *models.Expression) {
 
 // parseExpression parses a mathematical expression into tokens.
 func (s *Server) parseExpression(expression string) ([]string, error) {
-	expression = strings.ReplaceAll(expression, " ", "")
+	if len(expression) == 0 {
+		return nil, fmt.Errorf("invalid request body")
+	}
 
-	var tokens []string
-	var currentNumber strings.Builder
+	var (
+		tokens     []string
+		parenStack int
+	)
 
 	for i := 0; i < len(expression); i++ {
-		char := expression[i]
-
-		if char == '-' && (i == 0 || isOperator(string(expression[i-1]))) {
-			currentNumber.WriteRune('-')
+		c := expression[i]
+		if c == ' ' {
 			continue
 		}
 
-		if isDigit(char) || char == '.' {
-			currentNumber.WriteByte(char)
-
-			if i == len(expression)-1 {
-				tokens = append(tokens, currentNumber.String())
+		if c == '(' {
+			tokens = append(tokens, "(")
+			parenStack++
+			continue
+		}
+		if c == ')' {
+			if parenStack == 0 {
+				return nil, fmt.Errorf("invalid expression: unmatched parentheses")
 			}
+			tokens = append(tokens, ")")
+			parenStack--
 			continue
 		}
-
-		if currentNumber.Len() > 0 {
-			tokens = append(tokens, currentNumber.String())
-			currentNumber.Reset()
+		if isDigit(c) || c == '.' {
+			j := i
+			for j < len(expression) && (isDigit(expression[j]) || expression[j] == '.') {
+				j++
+			}
+			tokens = append(tokens, expression[i:j])
+			i = j - 1
+			continue
 		}
+		if isOperator(string(c)) {
+			if i > 0 && isOperator(string(expression[i-1])) && !(expression[i-1] == '(' && c == '-') {
+				if c == '-' && expression[i-1] == '-' {
+					return nil, fmt.Errorf("invalid expression: invalid structure")
+				}
+			}
+			if c == '-' && (i == 0 || isOperator(string(expression[i-1])) || expression[i-1] == '(') {
+				tokens = append(tokens, "-1", "*")
+				continue
+			}
+			tokens = append(tokens, string(c))
+			continue
+		}
+		return nil, fmt.Errorf("invalid expression: unexpected character '%c'", c)
+	}
 
-		if isOperator(string(char)) {
-			tokens = append(tokens, string(char))
+	if parenStack != 0 {
+		return nil, fmt.Errorf("invalid expression: unmatched parentheses")
+	}
+
+	for i := 0; i < len(tokens)-1; i++ {
+		if tokens[i] == "(" && tokens[i+1] == ")" {
+			return nil, fmt.Errorf("invalid expression: empty expression")
 		}
 	}
 
-	if len(tokens) < 3 {
+	for i := 0; i < len(tokens)-1; i++ {
+		if isOperator(tokens[i]) && tokens[i+1] == ")" {
+			return nil, fmt.Errorf("invalid expression: invalid structure")
+		}
+		if tokens[i] == "(" && isOperator(tokens[i+1]) {
+			return nil, fmt.Errorf("invalid expression: invalid structure")
+		}
+	}
+
+	operands, operators := 0, 0
+	for _, token := range tokens {
+		if isOperator(token) {
+			operators++
+			continue
+		}
+		if token != "(" && token != ")" {
+			operands++
+		}
+	}
+
+	if operators == 0 {
 		return nil, fmt.Errorf("invalid expression: too few tokens")
+	}
+
+	if len(tokens) == 1 && isOperator(tokens[0]) {
+		return nil, fmt.Errorf("invalid expression: too few tokens")
+	}
+
+	if len(tokens) > 1 && isOperator(tokens[len(tokens)-1]) {
+		if len(tokens) == 2 {
+			return nil, fmt.Errorf("invalid expression: too few tokens") // e.g., "2*"
+		}
+		return nil, fmt.Errorf("invalid expression: trailing operator") // e.g., "1+2+"
+	}
+
+	if operators > 0 && operands <= 1 {
+		return nil, fmt.Errorf("invalid expression: too few tokens")
+	}
+
+	if operands <= operators && operators > 0 {
+		return nil, fmt.Errorf("invalid expression: invalid structure")
+	}
+
+	for _, token := range tokens {
+		if token != "(" && token != ")" && !isOperator(token) && strings.Count(token, ".") > 1 {
+			return nil, fmt.Errorf("invalid expression: invalid number format")
+		}
 	}
 
 	return tokens, nil

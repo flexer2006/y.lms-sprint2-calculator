@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator - Expression Details</title>
+    <link rel="stylesheet" href="/web/css/style.css">
+</head>
+<body onload="loadExpressionDetail()">
+<div class="nav">
+    <a href="/web/calculate">New Calculation</a>
+    <a href="/web/expressions">View All Expressions</a>
+</div>
+
+<div class="container">
+    <h1>Expression Details</h1>
+
+    <button onclick="loadExpressionDetail()">Refresh</button>
+
+    <div id="errorMessage" class="error hidden"></div>
+
+    <div class="expression-item">
+        <p><strong>ID:</strong> <span id="expressionId"></span></p>
+        <p><strong>Expression:</strong> <span id="expressionValue"></span></p>
+        <p><strong>Status:</strong> <span id="expressionStatus" class="expression-status"></span></p>
+        <p class="hidden"><strong>Result:</strong> <span id="expressionResult"></span></p>
+        <p class="hidden"><strong>Error:</strong> <span id="expressionError" class="error"></span></p>
+    </div>
+</div>
+
+<script src="/web/js/app.js"></script>
+</body>
+</html>

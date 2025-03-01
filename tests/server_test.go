@@ -85,12 +85,12 @@ func TestServer_HandleCalculate(t *testing.T) {
 			request: models.CalculateRequest{
 				Expression: "2 + + 2",
 			},
-			expectedStatus: http.StatusCreated,
+			expectedStatus: http.StatusUnprocessableEntity,
 			validateResp: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var resp models.CalculateResponse
+				var resp map[string]string
 				err := json.NewDecoder(w.Body).Decode(&resp)
 				require.NoError(t, err)
-				assert.NotEmpty(t, resp.ID)
+				assert.Contains(t, resp["error"], "invalid expression: invalid structure")
 			},
 		},
 	}

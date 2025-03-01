@@ -87,13 +87,11 @@ func (s *Storage) UpdateExpressionResult(id string, result float64) error {
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
 
-		// Create a copy for updating
 		updated := *expr
 		updated.Result = &result
 		updated.Status = models.StatusComplete
 		updated.UpdatedAt = time.Now()
 
-		// Save the updated version
 		s.expressions.Store(id, &updated)
 		return nil
 	}
@@ -105,13 +103,11 @@ func (s *Storage) UpdateExpressionError(id string, err string) error {
 	if value, ok := s.expressions.Load(id); ok {
 		expr := value.(*models.Expression)
 
-		// Create a copy for updating
 		updated := *expr
 		updated.Error = err
 		updated.Status = models.StatusError
 		updated.UpdatedAt = time.Now()
 
-		// Save the updated version
 		s.expressions.Store(id, &updated)
 		return nil
 	}
@@ -138,8 +134,8 @@ func isValidStatusTransition(from, to models.ExpressionStatus) bool {
 	case models.StatusProgress:
 		return to == models.StatusComplete || to == models.StatusError
 	case models.StatusComplete, models.StatusError:
-		return false // Cannot change status after completion or error
+		return false
 	default:
-		return true // Allow transition for new expressions
+		return true
 	}
 }

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator - New Expression</title>
+    <link rel="stylesheet" href="/web/css/style.css">
+</head>
+<body>
+<div class="nav">
+    <a href="/web/calculate">New Calculation</a>
+    <a href="/web/expressions">View All Expressions</a>
+</div>
+
+<div class="container">
+    <h1>Enter Expression to Calculate</h1>
+
+    <div>
+        <input type="text" id="expression" placeholder="e.g., 2 + 2 * 3">
+        <button onclick="submitExpression()">Calculate</button>
+        <div id="errorMessage" class="error hidden"></div>
+    </div>
+
+    <div id="result" class="hidden" style="margin-top: 20px;">
+        <p>Expression submitted successfully!</p>
+        <p>Expression ID: <span id="expressionId"></span></p>
+        <p><a id="expressionLink" href="#">View Expression Status</a></p>
+    </div>
+</div>
+
+<script src="/web/js/app.js"></script>
+</body>
+</html>

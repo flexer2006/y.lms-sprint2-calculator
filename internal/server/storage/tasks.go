@@ -54,7 +54,6 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 			zap.String("id", id),
 			zap.Float64("result", result))
 
-		// Check if all tasks for this expression are completed
 		allTasksCompleted := true
 		s.tasks.Range(func(_, v interface{}) bool {
 			t := v.(*models.Task)
@@ -65,7 +64,6 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 			return true
 		})
 
-		// If all tasks are completed, update the expression status
 		if allTasksCompleted {
 			if err := s.UpdateExpressionStatus(task.ExpressionID, models.StatusComplete); err != nil {
 				s.logger.Error("Failed to update expression status",

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator - All Expressions</title>
+  <link rel="stylesheet" href="/web/css/style.css">
+</head>
+<body onload="loadExpressions()">
+<div class="nav">
+  <a href="/web/calculate">New Calculation</a>
+  <a href="/web/expressions">View All Expressions</a>
+</div>
+
+<div class="container">
+  <h1>All Expressions</h1>
+
+  <button onclick="loadExpressions()">Refresh</button>
+
+  <div id="errorMessage" class="error hidden"></div>
+
+  <ul id="expressionsList" class="expression-list">
+    <li>Loading expressions...</li>
+  </ul>
+</div>
+
+<script src="/web/js/app.js"></script>
+</body>
+</html>
