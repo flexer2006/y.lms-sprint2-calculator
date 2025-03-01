@@ -1,67 +1,64 @@
-// API endpoints
-const API_BASE_URL = '/api/v1';
-const CALCULATE_URL = `${API_BASE_URL}/calculate`;
-const EXPRESSIONS_URL = `${API_BASE_URL}/expressions`;
-
-// Helper function to show errors
-function showError(message) {
-    const errorElement = document.getElementById('errorMessage');
+// Common utility functions
+function showError(message, elementId = 'errorMessage') {
+    const errorElement = document.getElementById(elementId);
     errorElement.textContent = message;
     errorElement.classList.remove('hidden');
 }
 
-// Helper function to hide errors
-function hideError() {
-    const errorElement = document.getElementById('errorMessage');
+function hideError(elementId = 'errorMessage') {
+    const errorElement = document.getElementById(elementId);
     errorElement.classList.add('hidden');
 }
 
-// Submit expression to API
+function getStatusClass(status) {
+    return `status-${status}`;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+// Calculate page functions
 function submitExpression() {
+    const expression = document.getElementById('expression').value.trim();
     hideError();
 
-    const expressionInput = document.getElementById('expression');
-    const expression = expressionInput.value.trim();
-
     if (!expression) {
-        showError('Expression cannot be empty');
+        showError('Please enter an expression');
         return;
     }
 
-    fetch(CALCULATE_URL, {
+    fetch('/api/v1/calculate', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ expression: expression }),
+        body: JSON.stringify({
+            expression: expression
+        })
     })
         .then(response => {
             if (!response.ok) {
                 return response.json().then(data => {
-                    throw new Error(data.error || 'Failed to submit expression');
+                    throw new Error(data.error || 'Failed to calculate expression');
                 });
             }
             return response.json();
         })
         .then(data => {
-            // Show success message with expression ID
-            document.getElementById('expressionId').textContent = data.id;
-            document.getElementById('expressionLink').href = `/web/expression/${data.id}`;
             document.getElementById('result').classList.remove('hidden');
+            document.getElementById('expressionId').textContent = data.id;
+            document.getElementById('expressionLink').href = `/web/expressions/${data.id}`;
         })
         .catch(error => {
             showError(error.message);
         });
 }
 
-// Load all expressions
+// Expression list page functions
 function loadExpressions() {
-    hideError();
-
-    const listElement = document.getElementById('expressionsList');
-    listElement.innerHTML = '<li>Loading expressions...</li>';
-
-    fetch(EXPRESSIONS_URL)
+    fetch('/api/v1/expressions')
         .then(response => {
             if (!response.ok) {
                 return response.json().then(data => {
@@ -71,60 +68,54 @@ function loadExpressions() {
             return response.json();
         })
         .then(data => {
+            const expressionsList = document.getElementById('expressionsList');
+            expressionsList.innerHTML = '';
+
             if (!data.expressions || data.expressions.length === 0) {
-                listElement.innerHTML = '<li>No expressions found</li>';
+                expressionsList.innerHTML = '<li>No expressions found</li>';
                 return;
             }
 
-            listElement.innerHTML = '';
             data.expressions.forEach(expr => {
-                const li = document.createElement('li');
-                li.className = 'expression-item';
+                const item = document.createElement('li');
+                item.className = 'expression-item';
 
                 const status = document.createElement('span');
-                status.className = `expression-status status-${expr.status}`;
+                status.className = `expression-status ${getStatusClass(expr.status)}`;
                 status.textContent = expr.status;
 
-                li.innerHTML = `
-                <p><strong>Expression:</strong> ${expr.expression}</p>
-                <p><strong>Status:</strong> </p>
-                <p>${expr.result !== undefined && expr.status === 'COMPLETE' ?
-                    `<strong>Result:</strong> ${expr.result}` : ''}
-                   ${expr.error ? `<strong>Error:</strong> <span class="error">${expr.error}</span>` : ''}</p>
-                <p><a href="/web/expression/${expr.id}">View Details</a></p>
-            `;
+                item.innerHTML = `
+                    <strong>ID:</strong> <a href="/web/expressions/${expr.id}">${expr.id}</a><br>
+                    <strong>Expression:</strong> ${expr.expression || 'N/A'}<br>
+                    <strong>Status:</strong> `;
+                item.appendChild(status);
 
-                li.querySelector('p:nth-child(2)').appendChild(status);
-                listElement.appendChild(li);
+                if (expr.result !== undefined && expr.result !== null) {
+                    item.innerHTML += `<br><strong>Result:</strong> ${expr.result}`;
+                }
+
+                if (expr.error) {
+                    item.innerHTML += `<br><strong>Error:</strong> <span class="error">${expr.error}</span>`;
+                }
+
+                expressionsList.appendChild(item);
             });
         })
         .catch(error => {
-            listElement.innerHTML = '';
             showError(error.message);
         });
 }
 
-// Load expression detail
+// Expression detail page functions
 function loadExpressionDetail() {
-    hideError();
+    const pathParts = window.location.pathname.split('/');
+    const expressionId = pathParts[pathParts.length - 1];
 
-    // Extract expression ID from URL
-    const path = window.location.pathname;
-    const expressionId = path.substring(path.lastIndexOf('/') + 1);
-
-    if (!expressionId) {
-        showError('Expression ID not provided');
-        return;
-    }
-
-    fetch(`${EXPRESSIONS_URL}/${expressionId}`)
+    fetch(`/api/v1/expressions/${expressionId}`)
         .then(response => {
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Expression not found');
-                }
                 return response.json().then(data => {
-                    throw new Error(data.error || 'Failed to load expression');
+                    throw new Error(data.error || 'Failed to load expression details');
                 });
             }
             return response.json();
@@ -132,44 +123,29 @@ function loadExpressionDetail() {
         .then(data => {
             const expr = data.expression;
             document.getElementById('expressionId').textContent = expr.id;
-            document.getElementById('expressionValue').textContent = expr.expression;
+            document.getElementById('expressionValue').textContent = expr.expression || 'N/A';
 
             const statusElement = document.getElementById('expressionStatus');
             statusElement.textContent = expr.status;
-            statusElement.className = `expression-status status-${expr.status}`;
+            statusElement.className = `expression-status ${getStatusClass(expr.status)}`;
 
-            // Show result if available
-            const resultContainer = document.querySelector('#expressionResult').parentNode;
-            if (expr.result !== null && expr.result !== undefined) {
-                document.getElementById('expressionResult').textContent = expr.result;
-                resultContainer.classList.remove('hidden');
+            const resultElement = document.getElementById('expressionResult');
+            if (expr.result !== undefined && expr.result !== null) {
+                resultElement.textContent = expr.result;
+                resultElement.parentElement.classList.remove('hidden');
             } else {
-                resultContainer.classList.add('hidden');
+                resultElement.parentElement.classList.add('hidden');
             }
 
-            // Show error if available
-            const errorContainer = document.querySelector('#expressionError').parentNode;
+            const errorElement = document.getElementById('expressionError');
             if (expr.error) {
-                document.getElementById('expressionError').textContent = expr.error;
-                errorContainer.classList.remove('hidden');
+                errorElement.textContent = expr.error;
+                errorElement.parentElement.classList.remove('hidden');
             } else {
-                errorContainer.classList.add('hidden');
+                errorElement.parentElement.classList.add('hidden');
             }
         })
         .catch(error => {
             showError(error.message);
         });
 }
-
-// Handle Enter key in expression input
-document.addEventListener('DOMContentLoaded', function() {
-    const expressionInput = document.getElementById('expression');
-    if (expressionInput) {
-        expressionInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                submitExpression();
-            }
-        });
-    }
-});
