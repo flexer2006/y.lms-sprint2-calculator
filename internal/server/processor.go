@@ -1,9 +1,8 @@
-// Package server provides functionalities for processing mathematical expressions.
+// Package server предоставляет функциональные возможности для обработки математических выражений.
 package server
 
 import (
 	"fmt"
-	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -11,63 +10,40 @@ import (
 	"strings"
 )
 
-// processExpression processes a given mathematical expression by creating tasks.
-func (s *Server) processExpression(expr *models.Expression) {
-	s.logger.Info(common.LogProcessingExpression, zap.String("id", expr.ID), zap.String("expression", expr.Expression))
-
-	if err := s.storage.UpdateExpressionStatus(expr.ID, models.StatusProgress); err != nil {
-		s.logger.Error("Failed to update expression status",
-			zap.String("id", expr.ID),
-			zap.Error(err))
-		return
-	}
-
+// processExpression обрабатывает заданное математическое выражение, составляя задачи.
+func (s *Server) processExpression(expr *models.Expression) error {
 	tokens, err := s.parseExpression(expr.Expression)
 	if err != nil {
-		s.logger.Error(common.LogFailedParseExpression,
-			zap.String("id", expr.ID),
-			zap.String(common.FieldExpression, expr.Expression),
+		s.logger.Error("Failed to parse expression",
+			zap.String("expression", expr.Expression),
 			zap.Error(err))
-
 		if updateErr := s.storage.UpdateExpressionError(expr.ID, err.Error()); updateErr != nil {
-			s.logger.Error(common.ErrFailedUpdateExpr,
-				zap.String("id", expr.ID),
-				zap.Error(updateErr))
+			s.logger.Error("Failed to update expression error status", zap.Error(updateErr))
 		}
-		return
+		return err
 	}
 
-	tasks := s.createTasks(expr.ID, tokens)
-	if len(tasks) == 0 {
-		s.logger.Error(common.LogNoValidTasksCreated,
-			zap.String("id", expr.ID),
-			zap.String(common.FieldExpression, expr.Expression))
-		if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create valid tasks"); updateErr != nil {
-			s.logger.Error(common.ErrFailedUpdateExpr,
-				zap.String("id", expr.ID),
-				zap.Error(updateErr))
+	if err := s.storage.UpdateExpressionStatus(expr.ID, models.StatusProgress); err != nil {
+		s.logger.Error("Failed to update expression status", zap.Error(err))
+		return err
+	}
+
+	tasks, err := s.createTasks(expr.ID, tokens)
+	if err != nil {
+		s.logger.Error("Failed to create tasks", zap.Error(err))
+		if updateErr := s.storage.UpdateExpressionError(expr.ID, err.Error()); updateErr != nil {
+			s.logger.Error("Failed to update expression error status", zap.Error(updateErr))
 		}
-		return
+		return err
 	}
 
 	for _, task := range tasks {
 		if err := s.storage.SaveTask(task); err != nil {
-			s.logger.Error("Failed to save task",
-				zap.String("expressionID", expr.ID),
-				zap.String("taskID", task.ID),
-				zap.Error(err))
-			if updateErr := s.storage.UpdateExpressionError(expr.ID, "Failed to create tasks"); updateErr != nil {
-				s.logger.Error(common.ErrFailedUpdateExpr,
-					zap.String("id", expr.ID),
-					zap.Error(updateErr))
-			}
-			return
+			s.logger.Error("Failed to save task", zap.Error(err))
+			return err
 		}
 	}
-
-	s.logger.Info("Tasks created successfully",
-		zap.String("id", expr.ID),
-		zap.Int("taskCount", len(tasks)))
+	return nil
 }
 
 // parseExpression parses a mathematical expression into tokens.
@@ -165,9 +141,9 @@ func (s *Server) parseExpression(expression string) ([]string, error) {
 
 	if len(tokens) > 1 && isOperator(tokens[len(tokens)-1]) {
 		if len(tokens) == 2 {
-			return nil, fmt.Errorf("invalid expression: too few tokens") // e.g., "2*"
+			return nil, fmt.Errorf("invalid expression: too few tokens")
 		}
-		return nil, fmt.Errorf("invalid expression: trailing operator") // e.g., "1+2+"
+		return nil, fmt.Errorf("invalid expression: trailing operator")
 	}
 
 	if operators > 0 && operands <= 1 {
@@ -187,34 +163,61 @@ func (s *Server) parseExpression(expression string) ([]string, error) {
 	return tokens, nil
 }
 
-// createTasks creates computational tasks from tokens of an expression.
-func (s *Server) createTasks(exprID string, tokens []string) []*models.Task {
-	var tasks []*models.Task
+// createTasks создает вычислительные задачи из лексем выражения.
+func (s *Server) createTasks(exprID string, tokens []string) ([]*models.Task, error) {
+	rpnTokens, err := s.toRPN(tokens)
+	if err != nil {
+		return nil, err
+	}
 
-	for i := 0; i < len(tokens); i++ {
-		if isOperator(tokens[i]) {
-			operationTime := s.getOperationTime(tokens[i])
+	var tasks []*models.Task
+	var stack []interface{}
+
+	for _, token := range rpnTokens {
+		if isOperator(token) {
+			if len(stack) < 2 {
+				return nil, fmt.Errorf("invalid RPN expression: too few operands")
+			}
+
+			op2 := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			op1 := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
 
 			task := &models.Task{
-				ID:            uuid.New().String(),
-				ExpressionID:  exprID,
-				Operation:     tokens[i],
-				OperationTime: operationTime,
+				ID:           uuid.New().String(),
+				ExpressionID: exprID,
+				Operation:    token,
 			}
 
-			if i > 0 && i < len(tokens)-1 {
-				arg1, err1 := strconv.ParseFloat(tokens[i-1], 64)
-				arg2, err2 := strconv.ParseFloat(tokens[i+1], 64)
-				if err1 == nil && err2 == nil {
-					task.Arg1 = arg1
-					task.Arg2 = arg2
-					tasks = append(tasks, task)
-				}
+			_ = s.getOperationTime(token)
+
+			switch v := op1.(type) {
+			case float64:
+				task.Arg1 = v
+			case string:
+				task.DependsOnTaskIDs = append(task.DependsOnTaskIDs, v)
 			}
+			switch v := op2.(type) {
+			case float64:
+				task.Arg2 = v
+			case string:
+				task.DependsOnTaskIDs = append(task.DependsOnTaskIDs, v)
+			}
+
+			tasks = append(tasks, task)
+			stack = append(stack, task.ID)
+		} else {
+			num, _ := strconv.ParseFloat(token, 64)
+			stack = append(stack, num)
 		}
 	}
 
-	return tasks
+	if len(stack) != 1 {
+		return nil, fmt.Errorf("invalid RPN expression: too many operands")
+	}
+
+	return tasks, nil
 }
 
 // getOperationTime returns the time required for a specific operation.
@@ -246,4 +249,34 @@ func isOperator(token string) bool {
 // isDigit checks if a byte is a digit.
 func isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
+}
+
+// toRPN преобразует маркеры инфиксной нотации в обратную польскую нотацию
+func (s *Server) toRPN(tokens []string) ([]string, error) {
+	var stack []string
+	var output []string
+
+	for _, token := range tokens {
+		if isOperator(token) {
+
+			for len(stack) > 0 && isOperator(stack[len(stack)-1]) {
+				output = append(output, stack[len(stack)-1])
+				stack = stack[:len(stack)-1]
+			}
+			stack = append(stack, token)
+		} else {
+
+			if _, err := strconv.ParseFloat(token, 64); err != nil {
+				return nil, fmt.Errorf("invalid number: %s", token)
+			}
+			output = append(output, token)
+		}
+	}
+
+	for len(stack) > 0 {
+		output = append(output, stack[len(stack)-1])
+		stack = stack[:len(stack)-1]
+	}
+
+	return output, nil
 }

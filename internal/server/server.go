@@ -1,4 +1,4 @@
-// Package server provides the HTTP server setup and management.
+// Package server обеспечивает настройку и управление HTTP-сервером.
 package server
 
 import (
@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Server represents the HTTP server with its configuration, storage, and logger.
+// Server представляет собой HTTP-сервер с его конфигурацией, хранилищем и регистратором.
 type Server struct {
 	config  *configs.ServerConfig
 	storage *storage.Storage
@@ -100,7 +100,7 @@ func (s *Server) handleWebExpressionDetailPage(w http.ResponseWriter, r *http.Re
 	serveHTMLFile(w, r, "./web/html/expression-detail.html")
 }
 
-// Helper function to serve HTML files
+// Вспомогательная функция для обслуживания HTML-файлов
 func serveHTMLFile(w http.ResponseWriter, r *http.Request, path string) {
 
 	_, err := os.Stat(path)

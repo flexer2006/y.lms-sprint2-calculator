@@ -1,4 +1,4 @@
-// Package calculation provides functions to evaluate mathematical expressions.
+// Package calculation предоставляет функции для оценки математических выражений.
 package calculation
 
 import (
@@ -21,6 +21,17 @@ func EvaluateExpression(expression string) (float64, error) {
 		return 0, errors.New("invalid expression")
 	}
 
+	if logger != nil {
+		logger.Debug("Tokens generated", zap.Strings("tokens", tokens))
+	}
+
 	parser := &Parser{tokens: tokens, pos: 0}
-	return parser.parse()
+	result, err := parser.parse()
+	if err != nil {
+		if logger != nil {
+			logger.Error("Parser failed", zap.Error(err), zap.String("expression", expression))
+		}
+		return 0, err
+	}
+	return result, nil
 }

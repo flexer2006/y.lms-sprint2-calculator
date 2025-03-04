@@ -1,4 +1,4 @@
-// Package server provides HTTP response utilities for the server.
+// Package server предоставляет утилиты HTTP-ответов для сервера.
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// writeJSON writes a JSON response with the given status and value.
+// writeJSON записывает ответ в формате JSON с заданным статусом и значением.
 func (s *Server) writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set(common.HeaderContentType, common.ContentTypeJSON)
 	w.WriteHeader(status)
@@ -19,7 +19,7 @@ func (s *Server) writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	}
 }
 
-// writeError writes an error response with the given status and message.
+// writeError пишет ответ об ошибке с заданным статусом и сообщением.
 func (s *Server) writeError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set(common.HeaderContentType, common.ContentTypeJSON)
 	w.WriteHeader(status)

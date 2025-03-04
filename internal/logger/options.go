@@ -1,6 +1,6 @@
 package logger
 
-// LogLevel defines the logging level.
+// LogLevel определяет уровень ведения журнала.
 type LogLevel string
 
 const (
@@ -10,7 +10,7 @@ const (
 	Error LogLevel = "error"
 )
 
-// Options defines the logger settings.
+// Options определяет настройки регистратора.
 type Options struct {
 	Level       LogLevel
 	Encoding    string
@@ -20,7 +20,7 @@ type Options struct {
 	LogDir      string
 }
 
-// DefaultOptions returns the default logger options.
+// DefaultOptions возвращает параметры регистратора по умолчанию.
 func DefaultOptions() Options {
 	return Options{
 		Level:       Info,

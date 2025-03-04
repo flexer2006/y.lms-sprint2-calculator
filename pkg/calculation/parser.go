@@ -1,4 +1,4 @@
-// Package calculation provides functions to parse and evaluate mathematical expressions.
+// Package calculation предоставляет функции для разбора и оценки математических выражений.
 package calculation
 
 import (

@@ -1,4 +1,4 @@
-// Package configs provides configuration structures and functions for the application.
+// Package configs предоставляет конфигурационные структуры и функции для приложения.
 package configs
 
 import (
@@ -6,12 +6,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LoggerConfig holds the configuration for the logger.
+// LoggerConfig содержит конфигурацию для регистратора.
 type LoggerConfig struct {
-	Level      string // Level defines the logging level (e.g., debug, info, warn, error).
-	Encoding   string // Encoding specifies the format of the log output (e.g., json, console).
-	OutputPath string // OutputPath is the path where logs will be written.
-	ErrorPath  string // ErrorPath is the path where error logs will be written.
+	Level      string // Level определяет уровень логирования(например, debug, info, warn, error).
+	Encoding   string // Encoding задает формат вывода журнала (например, json, console).
+	OutputPath string // OutputPath - это путь, по которому будут записываться журналы.
+	ErrorPath  string // ErrorPath - путь, куда будут записываться журналы ошибок.
 }
 
 // BuildLogger creates and returns a new zap.Logger based on the LoggerConfig settings.

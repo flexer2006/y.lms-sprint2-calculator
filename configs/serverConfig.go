@@ -1,4 +1,4 @@
-// Package configs provides configuration structures and functions for the server.
+// Package configs предоставляет конфигурационные структуры и функции для сервера.
 package configs
 
 import (
@@ -7,13 +7,13 @@ import (
 	"strconv"
 )
 
-// ServerConfig holds all configuration for the server.
+// ServerConfig содержит всю конфигурацию сервера.
 type ServerConfig struct {
-	Port              string // Port on which the server will listen.
-	TimeAdditionMS    int64  // Time in milliseconds for addition operations.
-	TimeSubtractionMS int64  // Time in milliseconds for subtraction operations.
-	TimeMultiplyMS    int64  // Time in milliseconds for multiplication operations.
-	TimeDivisionMS    int64  // Time in milliseconds for division operations.
+	Port              string // Port на котором будет прослушиваться сервер.
+	TimeAdditionMS    int64  // Время в миллисекундах для операций сложения.
+	TimeSubtractionMS int64  // Время в миллисекундах для операций вычитания.
+	TimeMultiplyMS    int64  // Время в миллисекундах для операций умножения.
+	TimeDivisionMS    int64  // Время в миллисекундах для операций деления.
 }
 
 // NewServerConfig creates a new ServerConfig instance with values from environment variables or defaults.
@@ -49,7 +49,7 @@ func NewServerConfig() (*ServerConfig, error) {
 	}, nil
 }
 
-// getEnvString retrieves a string value from the environment or returns a default value.
+// getEnvString извлекает строковое значение из окружения или возвращает значение по умолчанию.
 func getEnvString(key, defaultValue string) string {
 	value, exists := os.LookupEnv(key)
 	if !exists {
@@ -58,7 +58,7 @@ func getEnvString(key, defaultValue string) string {
 	return value
 }
 
-// getEnvInt64 retrieves an int64 value from the environment or returns a default value.
+// getEnvInt64 извлекает значение int64 из среды или возвращает значение по умолчанию.
 func getEnvInt64(key string, defaultValue int64) (int64, error) {
 	value, exists := os.LookupEnv(key)
 	if !exists {

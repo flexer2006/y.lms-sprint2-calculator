@@ -1,11 +1,11 @@
-// Package models defines the data structures used in the server.
+// Package models определяет структуры данных, используемые в сервере.
 package models
 
 import (
 	"time"
 )
 
-// ExpressionStatus represents the status of an expression.
+// ExpressionStatus представляет собой статус выражения.
 type ExpressionStatus string
 
 const (
@@ -19,7 +19,7 @@ const (
 	StatusError ExpressionStatus = "ERROR"
 )
 
-// Expression represents a mathematical expression and its status.
+// Expression представляет собой математическое выражение и его состояние.
 type Expression struct {
 	ID         string           `json:"id"`
 	Expression string           `json:"expression,omitempty"`
@@ -30,45 +30,45 @@ type Expression struct {
 	Error      string           `json:"error,omitempty"`
 }
 
-// Task represents a computational task with two arguments and an operation.
+// Task представляет собой вычислительную задачу с двумя аргументами и операцией.
 type Task struct {
-	ID            string    `json:"id"`
-	Arg1          float64   `json:"arg1"`
-	Arg2          float64   `json:"arg2"`
-	Operation     string    `json:"operation"`
-	OperationTime int64     `json:"operation_time"`
-	ExpressionID  string    `json:"-"`
-	CreatedAt     time.Time `json:"-"`
-	Result        *float64  `json:"result,omitempty"`
+	ID               string
+	ExpressionID     string
+	Operation        string
+	Arg1             float64
+	Arg2             float64
+	Result           *float64 // nil
+	CreatedAt        time.Time
+	DependsOnTaskIDs []string
 }
 
-// CalculateRequest represents a request to calculate an expression.
+// CalculateRequest представляет собой запрос на вычисление выражения.
 type CalculateRequest struct {
 	Expression string `json:"expression"`
 }
 
-// CalculateResponse represents the response containing the ID of the calculation.
+// CalculateResponse представляет собой ответ, содержащий идентификатор вычисления.
 type CalculateResponse struct {
 	ID string `json:"id"`
 }
 
-// TaskResult represents the result of a task calculation.
+// TaskResult представляет собой результат вычисления задачи.
 type TaskResult struct {
 	ID     string  `json:"id"`
 	Result float64 `json:"result"`
 }
 
-// ExpressionResponse represents a response containing a single expression.
+// ExpressionResponse представляет собой ответ, содержащий одно выражение.
 type ExpressionResponse struct {
 	Expression Expression `json:"expression"`
 }
 
-// ExpressionsResponse represents a response containing multiple expressions.
+// ExpressionsResponse представляет собой ответ, содержащий несколько выражений.
 type ExpressionsResponse struct {
 	Expressions []Expression `json:"expressions"`
 }
 
-// TaskResponse represents a response containing a single task.
+// TaskResponse представляет собой ответ, содержащий одно задание.
 type TaskResponse struct {
 	Task Task `json:"task"`
 }

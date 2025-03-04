@@ -130,6 +130,11 @@ func TestCalculator(t *testing.T) {
 			expected: 4,
 		},
 		{
+			name:     "expression with spaces",
+			expr:     "  2*2*2 ",
+			expected: 8,
+		},
+		{
 			name:     "expression with multiple spaces",
 			expr:     "2   +   3   *   4",
 			expected: 14,

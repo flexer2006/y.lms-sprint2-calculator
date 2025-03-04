@@ -1,4 +1,4 @@
-// Package logger provides logging utilities and helpers for the application.
+// Package logger предоставляет утилиты и помощники для ведения журнала в приложении.
 package logger
 
 import (
@@ -11,10 +11,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// ctxKey is a custom type for context keys.
+// ctxKey тип для контекстных ключей.
 type ctxKey string
 
-// Context key constants used for logging context fields.
+// Константы контекстного ключа, используемые для полей контекста регистрации.
 const (
 	TraceIDKey       ctxKey = "trace_id"
 	RequestIDKey     ctxKey = "request_id"
@@ -41,7 +41,7 @@ func newEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-// extractContextFields extracts logging fields from the context.
+// extractContextFields извлекает поля журнала из контекста.
 func extractContextFields(ctx context.Context) []zapcore.Field {
 	var fields []zapcore.Field
 

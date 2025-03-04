@@ -58,11 +58,10 @@ func (l *Logger) defaultFatal(msg string, fields ...zapcore.Field) {
 	l.Logger.Fatal(msg, fields...)
 }
 
-// New creates a new logger with the specified options.
+// New cсоздает новый регистратор с указанными параметрами.
 func New(opts Options) (*Logger, error) {
 	config := zap.NewProductionConfig()
 
-	// Set the logging level
 	switch opts.Level {
 	case Debug:
 		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
@@ -117,12 +116,12 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 	}
 }
 
-// Sugar returns the SugaredLogger for structured logging.
+// Sugar возвращает SugaredLogger для структурированного протоколирования.
 func (l *Logger) Sugar() *zap.SugaredLogger {
 	return l.sugar
 }
 
-// Sync flushes any buffered log entries.
+// Sync сбрасывает все буферизованные записи журнала.
 func (l *Logger) Sync() error {
 	err1 := l.Logger.Sync()
 	err2 := l.sugar.Sync()
@@ -132,7 +131,7 @@ func (l *Logger) Sync() error {
 	return err2
 }
 
-// Close shuts down the logger and releases resources.
+// Close выключает регистратор и освобождает ресурсы.
 func (l *Logger) Close() error {
 	return l.Sync()
 }

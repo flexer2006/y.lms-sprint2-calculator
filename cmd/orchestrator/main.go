@@ -17,8 +17,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// main initializes the logger, configuration, and starts the server.
-// It also handles graceful shutdown on receiving termination signals.
+// main инициализирует регистратор, конфигурацию и запускает сервер.
+// Он также обрабатывает graceful shutdown при получении сигналов о завершении работы.
 func main() {
 
 	opts := logger.DefaultOptions()

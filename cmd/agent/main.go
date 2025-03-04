@@ -1,4 +1,4 @@
-// Package main is the entry point for the agent application.
+// Пакет main является точкой входа для приложения агента.
 package main
 
 import (
@@ -16,8 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// main initializes the logger, configuration, and starts the agent.
-// It also handles graceful shutdown on receiving termination signals.
+// Main инициализирует регистратор, конфигурацию и запускает агента.
+// Он также обрабатывает graceful shutdown при получении сигналов о завершении работы.
 func main() {
 
 	opts := logger.DefaultOptions()

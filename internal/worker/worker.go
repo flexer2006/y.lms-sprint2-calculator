@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// worker represents a computation goroutine.
+// worker  представляет собой горутину вычислений.
 func (a *Agent) worker(id int) {
 	defer a.wg.Done()
 
@@ -21,18 +21,14 @@ func (a *Agent) worker(id int) {
 			return
 		default:
 			if err := a.processTask(id); err != nil {
-				a.logger.Error("Failed to process task",
-					zap.Int(common.FieldWorkerID, id),
-					zap.Error(err))
-				time.Sleep(time.Second)
+				a.logger.Error("Error processing task", zap.Int(common.FieldWorkerID, id), zap.Error(err))
 			}
 		}
 	}
 }
 
-// processTask processes a single task.
+// processTask обрабатывает одну задачу.
 func (a *Agent) processTask(workerID int) error {
-
 	task, err := a.getTask()
 	if err != nil {
 		return fmt.Errorf(common.ErrFormatWithWrap, "failed to get task", err)
@@ -48,7 +44,20 @@ func (a *Agent) processTask(workerID int) error {
 		zap.String(common.FieldTaskID, task.ID),
 		zap.String(common.FieldOperation, task.Operation))
 
-	time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
+	var operationTime time.Duration = 100 * time.Millisecond
+
+	switch task.Operation {
+	case "+":
+		operationTime = 1000 * time.Millisecond
+	case "-":
+		operationTime = 1000 * time.Millisecond
+	case "*":
+		operationTime = 1000 * time.Millisecond
+	case "/":
+		operationTime = 1000 * time.Millisecond
+	}
+
+	time.Sleep(operationTime)
 
 	result := a.Calculate(task)
 

@@ -14,7 +14,6 @@ func tokenize(expression string) []string {
 
 	for i := 0; i < len(expression); i++ {
 		char := rune(expression[i])
-
 		switch char {
 		case ' ', '\t':
 			if number.Len() > 0 {
@@ -29,18 +28,15 @@ func tokenize(expression string) []string {
 				number.Reset()
 				lastWasNumber = true
 			}
-
 			if char == '-' {
 				if i == 0 || expression[i-1] == '(' || isOperator(string(expression[i-1])) {
 					tokens = append(tokens, "-")
 					continue
 				}
 			}
-
 			if lastWasNumber && char == '(' {
 				return nil
 			}
-
 			tokens = append(tokens, string(char))
 			lastWasNumber = false
 		default:

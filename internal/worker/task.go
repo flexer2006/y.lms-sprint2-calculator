@@ -40,7 +40,7 @@ func (a *Agent) getTask() (*models.Task, error) {
 	return &taskResp.Task, nil
 }
 
-// sendResult sends the calculation result to the orchestrator.
+// sendResult отправляет результат вычисления в оркестратор.
 func (a *Agent) sendResult(taskID string, result float64) error {
 	taskResult := models.TaskResult{
 		ID:     taskID,
