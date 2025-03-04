@@ -450,4 +450,4 @@ go tool cover -html=coverage.out
    - Убедитесь, что порты не заблокированы файрволом  
   
 ## Схема  
-![image](https://github.com/user-attachments/assets/3dcb8d5b-05f9-4878-bb07-5f1513920965)
+![image](https://github.com/user-attachments/assets/82865f7b-b631-47d8-b17b-30ee90eff946)
