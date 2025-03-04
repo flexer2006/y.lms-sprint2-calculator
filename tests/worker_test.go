@@ -39,10 +39,11 @@ func TestAgent_Calculate(t *testing.T) {
 		{
 			name: "Addition",
 			task: &models.Task{
-				ID:        "1",
-				Operation: "+",
-				Arg1:      10,
-				Arg2:      5,
+				ID:               "1",
+				Operation:        "+",
+				Arg1:             10,
+				Arg2:             5,
+				DependsOnTaskIDs: []string{}, // Добавлено для соответствия новой структуре, но не используется в Calculate
 			},
 			expected:    15,
 			expectError: false,
@@ -50,10 +51,11 @@ func TestAgent_Calculate(t *testing.T) {
 		{
 			name: "Subtraction",
 			task: &models.Task{
-				ID:        "2",
-				Operation: "-",
-				Arg1:      10,
-				Arg2:      5,
+				ID:               "2",
+				Operation:        "-",
+				Arg1:             10,
+				Arg2:             5,
+				DependsOnTaskIDs: []string{},
 			},
 			expected:    5,
 			expectError: false,
@@ -61,21 +63,23 @@ func TestAgent_Calculate(t *testing.T) {
 		{
 			name: "Multiplication",
 			task: &models.Task{
-				ID:        "3",
-				Operation: "*",
-				Arg1:      10,
-				Arg2:      5,
+				ID:               "3",
+				Operation:        "*",
+				Arg1:             10,
+				Arg2:             5,
+				DependsOnTaskIDs: []string{},
 			},
 			expected:    50,
 			expectError: false,
 		},
 		{
-			name: "Divisio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n",
+			name: "Division",
 			task: &models.Task{
-				ID:        "4",
-				Operation: "/",
-				Arg1:      10,
-				Arg2:      5,
+				ID:               "4",
+				Operation:        "/",
+				Arg1:             10,
+				Arg2:             5,
+				DependsOnTaskIDs: []string{},
 			},
 			expected:    2,
 			expectError: false,
@@ -83,20 +87,22 @@ func TestAgent_Calculate(t *testing.T) {
 		{
 			name: "Division by zero",
 			task: &models.Task{
-				ID:        "5",
-				Operation: "/",
-				Arg1:      10,
-				Arg2:      0,
+				ID:               "5",
+				Operation:        "/",
+				Arg1:             10,
+				Arg2:             0,
+				DependsOnTaskIDs: []string{},
 			},
 			expectError: true,
 		},
 		{
 			name: "Unknown operation",
 			task: &models.Task{
-				ID:        "6",
-				Operation: "%",
-				Arg1:      10,
-				Arg2:      5,
+				ID:               "6",
+				Operation:        "%",
+				Arg1:             10,
+				Arg2:             5,
+				DependsOnTaskIDs: []string{},
 			},
 			expectError: true,
 		},
@@ -116,7 +122,6 @@ func TestAgent_Calculate(t *testing.T) {
 }
 
 func TestAgent_Integration(t *testing.T) {
-
 	taskCh := make(chan models.Task, 1)
 	resultCh := make(chan models.TaskResult, 1)
 
@@ -186,11 +191,11 @@ func TestAgent_Integration(t *testing.T) {
 	}()
 
 	task := models.Task{
-		ID:            "test-task",
-		Operation:     "+",
-		Arg1:          10,
-		Arg2:          5,
-		OperationTime: 100,
+		ID:               "test-task",
+		Operation:        "+",
+		Arg1:             10,
+		Arg2:             5,
+		DependsOnTaskIDs: []string{}, // Добавлено для соответствия новой структуре
 	}
 
 	select {

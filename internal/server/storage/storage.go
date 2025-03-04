@@ -3,10 +3,8 @@ package storage
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
-	"github.com/flexer2006/y.lms-sprint2-calculator/common"
 	"github.com/flexer2006/y.lms-sprint2-calculator/internal/server/models"
 
 	"go.uber.org/zap"
@@ -21,7 +19,7 @@ type Storage struct {
 	logger      *zap.Logger
 }
 
-// New creates a new Storage instance with the provided logger.
+// New создает новый экземпляр Storage с предоставленным logger.
 func New(logger *zap.Logger) *Storage {
 	return &Storage{
 		taskQueue: make([]models.Task, 0),
@@ -54,7 +52,7 @@ func (s *Storage) GetTaskResult(taskID string) (float64, error) {
 		}
 		return *task.Result, nil
 	}
-	return 0, fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
+	return 0, fmt.Errorf("task not found") // Исправлено на константную строку вместо strings.ToLower
 }
 
 // GetTasksByExpressionID извлекает все задачи, связанные с идентификатором выражения.

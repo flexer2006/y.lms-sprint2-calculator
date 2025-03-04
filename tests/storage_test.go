@@ -115,12 +115,12 @@ func TestStorage_SaveAndGetTask(t *testing.T) {
 	store := storage.New(logger)
 
 	task := &models.Task{
-		ID:            "task-1",
-		Arg1:          2.0,
-		Arg2:          3.0,
-		Operation:     "+",
-		OperationTime: 100,
-		ExpressionID:  "expr-1",
+		ID:               "task-1",
+		Arg1:             2.0,
+		Arg2:             3.0,
+		Operation:        "+",
+		ExpressionID:     "expr-1",
+		DependsOnTaskIDs: []string{},
 	}
 
 	err := store.SaveTask(task)
@@ -132,8 +132,8 @@ func TestStorage_SaveAndGetTask(t *testing.T) {
 	assert.Equal(t, task.Arg1, saved.Arg1)
 	assert.Equal(t, task.Arg2, saved.Arg2)
 	assert.Equal(t, task.Operation, saved.Operation)
-	assert.Equal(t, task.OperationTime, saved.OperationTime)
 	assert.Equal(t, task.ExpressionID, saved.ExpressionID)
+	assert.Equal(t, task.DependsOnTaskIDs, saved.DependsOnTaskIDs)
 }
 
 func TestStorage_UpdateTaskResult(t *testing.T) {
@@ -144,12 +144,12 @@ func TestStorage_UpdateTaskResult(t *testing.T) {
 	assert.Error(t, err)
 
 	task := &models.Task{
-		ID:            "task-1",
-		Arg1:          2.0,
-		Arg2:          3.0,
-		Operation:     "+",
-		OperationTime: 100,
-		ExpressionID:  "expr-1",
+		ID:               "task-1",
+		Arg1:             2.0,
+		Arg2:             3.0,
+		Operation:        "+",
+		ExpressionID:     "expr-1",
+		DependsOnTaskIDs: []string{},
 	}
 	require.NoError(t, store.SaveTask(task))
 
@@ -171,20 +171,20 @@ func TestStorage_GetNextTask(t *testing.T) {
 
 	tasks := []*models.Task{
 		{
-			ID:            "task-1",
-			Arg1:          2.0,
-			Arg2:          3.0,
-			Operation:     "+",
-			OperationTime: 100,
-			ExpressionID:  "expr-1",
+			ID:               "task-1",
+			Arg1:             2.0,
+			Arg2:             3.0,
+			Operation:        "+",
+			ExpressionID:     "expr-1",
+			DependsOnTaskIDs: []string{},
 		},
 		{
-			ID:            "task-2",
-			Arg1:          4.0,
-			Arg2:          5.0,
-			Operation:     "*",
-			OperationTime: 200,
-			ExpressionID:  "expr-1",
+			ID:               "task-2",
+			Arg1:             4.0,
+			Arg2:             5.0,
+			Operation:        "*",
+			ExpressionID:     "expr-1",
+			DependsOnTaskIDs: []string{},
 		},
 	}
 
@@ -314,49 +314,37 @@ func TestStorage_SaveTask_Validation(t *testing.T) {
 		{
 			name: "valid task",
 			task: &models.Task{
-				ID:            "task-1",
-				Arg1:          2.0,
-				Arg2:          3.0,
-				Operation:     "+",
-				OperationTime: 100,
-				ExpressionID:  "expr-1",
+				ID:               "task-1",
+				Arg1:             2.0,
+				Arg2:             3.0,
+				Operation:        "+",
+				ExpressionID:     "expr-1",
+				DependsOnTaskIDs: []string{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "empty id",
 			task: &models.Task{
-				Arg1:          2.0,
-				Arg2:          3.0,
-				Operation:     "+",
-				OperationTime: 100,
-				ExpressionID:  "expr-1",
+				Arg1:             2.0,
+				Arg2:             3.0,
+				Operation:        "+",
+				ExpressionID:     "expr-1",
+				DependsOnTaskIDs: []string{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "invalid operation",
 			task: &models.Task{
-				ID:            "task-2",
-				Arg1:          2.0,
-				Arg2:          3.0,
-				Operation:     "%",
-				OperationTime: 100,
-				ExpressionID:  "expr-1",
+				ID:               "task-2",
+				Arg1:             2.0,
+				Arg2:             3.0,
+				Operation:        "%",
+				ExpressionID:     "expr-1",
+				DependsOnTaskIDs: []string{},
 			},
-			wantErr: false,
-		},
-		{
-			name: "zero operation time",
-			task: &models.Task{
-				ID:            "task-3",
-				Arg1:          2.0,
-				Arg2:          3.0,
-				Operation:     "+",
-				OperationTime: 0,
-				ExpressionID:  "expr-1",
-			},
-			wantErr: false,
+			wantErr: false, // Assuming % is a valid operation for testing
 		},
 	}
 
@@ -374,7 +362,8 @@ func TestStorage_SaveTask_Validation(t *testing.T) {
 			saved, err := store.GetTask(tt.task.ID)
 			require.NoError(t, err)
 			assert.Equal(t, tt.task.Operation, saved.Operation)
-			assert.Equal(t, tt.task.OperationTime, saved.OperationTime)
+			assert.Equal(t, tt.task.ExpressionID, saved.ExpressionID)
+			assert.Equal(t, tt.task.DependsOnTaskIDs, saved.DependsOnTaskIDs)
 		})
 	}
 }
@@ -385,20 +374,20 @@ func TestStorage_TaskQueue_Behavior(t *testing.T) {
 
 	tasks := []*models.Task{
 		{
-			ID:            "task-1",
-			Arg1:          2.0,
-			Arg2:          3.0,
-			Operation:     "+",
-			OperationTime: 100,
-			ExpressionID:  "expr-1",
+			ID:               "task-1",
+			Arg1:             2.0,
+			Arg2:             3.0,
+			Operation:        "+",
+			ExpressionID:     "expr-1",
+			DependsOnTaskIDs: []string{},
 		},
 		{
-			ID:            "task-2",
-			Arg1:          4.0,
-			Arg2:          5.0,
-			Operation:     "*",
-			OperationTime: 200,
-			ExpressionID:  "expr-1",
+			ID:               "task-2",
+			Arg1:             4.0,
+			Arg2:             5.0,
+			Operation:        "*",
+			ExpressionID:     "expr-1",
+			DependsOnTaskIDs: []string{},
 		},
 	}
 
@@ -416,7 +405,6 @@ func TestStorage_TaskQueue_Behavior(t *testing.T) {
 	assert.Error(t, err, "Queue should be empty after processing all tasks")
 
 	for _, expectedTask := range tasks {
-
 		require.NoError(t, store.SaveTask(expectedTask))
 
 		task, err := store.GetNextTask()
@@ -472,12 +460,12 @@ func TestStorage_ConcurrentTaskProcessing(t *testing.T) {
 
 	for i := 0; i < workers*tasksPerWorker; i++ {
 		task := &models.Task{
-			ID:            fmt.Sprintf("task-%d", i),
-			Arg1:          float64(i),
-			Arg2:          float64(i + 1),
-			Operation:     "+",
-			OperationTime: 100,
-			ExpressionID:  "expr-1",
+			ID:               fmt.Sprintf("task-%d", i),
+			Arg1:             float64(i),
+			Arg2:             float64(i + 1),
+			Operation:        "+",
+			ExpressionID:     "expr-1",
+			DependsOnTaskIDs: []string{},
 		}
 		require.NoError(t, store.SaveTask(task))
 	}
@@ -490,11 +478,10 @@ func TestStorage_ConcurrentTaskProcessing(t *testing.T) {
 			for {
 				task, err := store.GetNextTask()
 				if err != nil {
-
 					break
 				}
 
-				time.Sleep(time.Millisecond)
+				time.Sleep(time.Millisecond) // Simulate processing
 				result := task.Arg1 + task.Arg2
 				require.NoError(t, store.UpdateTaskResult(task.ID, result))
 
@@ -552,7 +539,6 @@ func TestStorage_EdgeCases(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
 			_ = store.UpdateExpressionStatus(expr.ID, models.StatusProgress)
 		}()
 	}

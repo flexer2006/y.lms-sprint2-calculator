@@ -1,8 +1,8 @@
+// Package storage provides data storage functionalities for expressions and tasks.
 package storage
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// SaveTask saves a task to storage and adds it to the task queue.
 func (s *Storage) SaveTask(task *models.Task) error {
 	if task.ID == "" {
 		s.logger.Error("Failed to save task: empty ID")
@@ -34,6 +35,7 @@ func (s *Storage) SaveTask(task *models.Task) error {
 	return nil
 }
 
+// GetTask retrieves a task by ID.
 func (s *Storage) GetTask(id string) (*models.Task, error) {
 	if value, ok := s.tasks.Load(id); ok {
 		s.logger.Debug(common.LogTaskRetrieved,
@@ -42,9 +44,10 @@ func (s *Storage) GetTask(id string) (*models.Task, error) {
 	}
 	s.logger.Warn("Task not found",
 		zap.String("id", id))
-	return nil, fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
+	return nil, fmt.Errorf("task not found") // Исправлено на константную строку вместо strings.ToLower
 }
 
+// UpdateTaskResult updates a task's result and checks for expression completion.
 func (s *Storage) UpdateTaskResult(id string, result float64) error {
 	if value, ok := s.tasks.Load(id); ok {
 		task := value.(*models.Task)
@@ -76,16 +79,17 @@ func (s *Storage) UpdateTaskResult(id string, result float64) error {
 	}
 	s.logger.Error("Failed to update task result: task not found",
 		zap.String("id", id))
-	return fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
+	return fmt.Errorf("task not found") // Исправлено на константную строку вместо strings.ToLower
 }
 
+// GetNextTask retrieves and removes the next task from the queue.
 func (s *Storage) GetNextTask() (*models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if len(s.taskQueue) == 0 {
 		s.logger.Debug("No tasks available in queue")
-		return nil, fmt.Errorf(strings.ToLower(common.ErrTaskNotFound))
+		return nil, fmt.Errorf("task not found")
 	}
 
 	task := s.taskQueue[0]

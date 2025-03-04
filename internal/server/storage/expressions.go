@@ -3,7 +3,6 @@ package storage
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/flexer2006/y.lms-sprint2-calculator/common"
@@ -16,7 +15,7 @@ import (
 func (s *Storage) SaveExpression(expr *models.Expression) error {
 	if expr.ID == "" {
 		s.logger.Error("Failed to save expression: empty ID")
-		return fmt.Errorf(common.ErrEmptyExpressionID)
+		return fmt.Errorf("expression ID cannot be empty")
 	}
 
 	now := time.Now()
@@ -42,7 +41,7 @@ func (s *Storage) GetExpression(id string) (*models.Expression, error) {
 	}
 	s.logger.Warn("Expression not found",
 		zap.String(common.FieldID, id))
-	return nil, fmt.Errorf(strings.ToLower(common.ErrExpressionNotFound))
+	return nil, fmt.Errorf("expression not found")
 }
 
 // UpdateExpressionStatus обновляет статус выражения в хранилище.
@@ -55,7 +54,7 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 		oldStatus := expr.Status
 
 		if oldStatus == status {
-			return nil // Already in desired status
+			return nil
 		}
 
 		if !isValidStatusTransition(oldStatus, status) {
@@ -63,7 +62,7 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 				zap.String(common.FieldID, id),
 				zap.String(common.FieldOldStatus, string(oldStatus)),
 				zap.String(common.FieldNewStatus, string(status)))
-			return fmt.Errorf(common.ErrInvalidStatusTransition, oldStatus, status)
+			return fmt.Errorf("invalid status transition from %s to %s", oldStatus, status)
 		}
 
 		updated := *expr
@@ -79,7 +78,7 @@ func (s *Storage) UpdateExpressionStatus(id string, status models.ExpressionStat
 	}
 	s.logger.Error(common.LogFailedUpdateStatusNotFound,
 		zap.String(common.FieldID, id))
-	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
+	return fmt.Errorf("expression not found")
 }
 
 // UpdateExpressionResult обновляет результат выражения в хранилище.
@@ -95,7 +94,7 @@ func (s *Storage) UpdateExpressionResult(id string, result float64) error {
 		s.expressions.Store(id, &updated)
 		return nil
 	}
-	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
+	return fmt.Errorf("expression not found")
 }
 
 // UpdateExpressionError обновляет ошибку выражения в хранилище.
@@ -111,7 +110,7 @@ func (s *Storage) UpdateExpressionError(id string, err string) error {
 		s.expressions.Store(id, &updated)
 		return nil
 	}
-	return fmt.Errorf(common.ErrExpressionNotFoundStorage)
+	return fmt.Errorf("expression not found")
 }
 
 // ListExpressions перечисляет все выражения, находящиеся в хранилище.

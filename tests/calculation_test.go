@@ -18,7 +18,6 @@ func TestCalculator(t *testing.T) {
 		expected float64
 		wantErr  bool
 	}{
-
 		{
 			name:     "simple addition",
 			expr:     "2 + 2",
@@ -39,7 +38,11 @@ func TestCalculator(t *testing.T) {
 			expr:     "10 / 2",
 			expected: 5,
 		},
-
+		{
+			name:     "multiple multiplication",
+			expr:     "2 * 2 * 2",
+			expected: 8,
+		},
 		{
 			name:     "operator precedence multiplication over addition",
 			expr:     "2 + 3 * 4",
@@ -55,7 +58,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "2 + 3 * 4 - 5 / 2.5",
 			expected: 12,
 		},
-
 		{
 			name:     "simple parentheses",
 			expr:     "(2 + 3) * 4",
@@ -76,7 +78,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "(2 + 3) * (4 + 5)",
 			expected: 45,
 		},
-
 		{
 			name:     "negative number addition",
 			expr:     "-2 + 3",
@@ -107,7 +108,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "-2 * (-3 + 4) - (-5 / -2)",
 			expected: -4.5,
 		},
-
 		{
 			name:     "decimal addition",
 			expr:     "2.5 + 3.7",
@@ -123,23 +123,16 @@ func TestCalculator(t *testing.T) {
 			expr:     "2.5 * 3.2 + 4.8 / 2.4",
 			expected: 10,
 		},
-
 		{
 			name:     "expression with spaces",
 			expr:     "  2  +  2  ",
 			expected: 4,
 		},
 		{
-			name:     "expression with spaces",
-			expr:     "  2*2*2 ",
-			expected: 8,
-		},
-		{
 			name:     "expression with multiple spaces",
 			expr:     "2   +   3   *   4",
 			expected: 14,
 		},
-
 		{
 			name:    "empty expression",
 			expr:    "",
@@ -190,7 +183,6 @@ func TestCalculator(t *testing.T) {
 			expr:    "2 2",
 			wantErr: true,
 		},
-
 		{
 			name:     "long expression",
 			expr:     "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10",
@@ -201,7 +193,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "1 + 2 * 3 - 4 / 2 + 5 * (6 + 7) - 8 + 9",
 			expected: 71,
 		},
-
 		{
 			name:     "unary minus at start",
 			expr:     "-2 * 3",
@@ -227,7 +218,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "-2.5 * -3.2",
 			expected: 8,
 		},
-
 		{
 			name:     "very small numbers",
 			expr:     "0.0000001 + 0.0000002",
@@ -238,7 +228,6 @@ func TestCalculator(t *testing.T) {
 			expr:     "1000000 * 1000000",
 			expected: 1000000000000,
 		},
-
 		{
 			name:     "complex mixed expression",
 			expr:     "((-2.5 + 3.7) * (-2 + 4.2)) / (2 * -0.5)",
