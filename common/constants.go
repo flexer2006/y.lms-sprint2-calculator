@@ -3,34 +3,29 @@ package common
 
 // Error messages used throughout the application.
 const (
-	ErrInvalidRequestBody        = "Invalid request body"
-	ErrExpressionNotFound        = "Expression not found"
-	ErrTaskNotFound              = "Task not found"
-	ErrFailedInitLogger          = "Failed to initialize logger: %v"
-	ErrFailedSyncLogger          = "Failed to sync logger: %v"
-	ErrFailedStartAgent          = "Failed to start agent"
-	ErrFailedUpdateExpr          = "Failed to update expression error"
-	ErrFailedCloseRespBody       = "Failed to close response body"
-	ErrUnexpectedStatusCode      = "unexpected status code: %d"
-	ErrFailedInitConfig          = "Failed to initialize config"
-	ErrUnexpectedToken           = "unexpected token"
-	ErrDivisionByZero            = "division by zero"
-	ErrModuloByZero              = "modulo by zero"
-	ErrInvalidModulo             = "modulo operation requires integer operands"
-	ErrUnexpectedEndExpr         = "unexpected end of expression"
-	ErrMissingCloseParen         = "missing closing parenthesis"
-	ErrExpressionNotFoundStorage = "expression not found"
-	ErrFailedProcessExpression   = "Failed to process expression"
-	ErrFailedProcessResult       = "Failed to process result"
-	ErrFailedStartServer         = "Failed to start server"
-	ErrServerShutdownFailed      = "Server shutdown failed"
-	ErrEmptyExpressionID         = "expression ID cannot be empty"
-	ErrInvalidStatusTransition   = "invalid status transition from %s to %s"
+	ErrInvalidRequestBody      = "Invalid request body"
+	ErrExpressionNotFound      = "Expression not found"
+	ErrTaskNotFound            = "Task not found"
+	ErrFailedInitLogger        = "Failed to initialize logger: %v"
+	ErrFailedSyncLogger        = "Failed to sync logger: %v"
+	ErrFailedStartAgent        = "Failed to start agent"
+	ErrFailedCloseRespBody     = "Failed to close response body"
+	ErrUnexpectedStatusCode    = "unexpected status code: %d"
+	ErrFailedInitConfig        = "Failed to initialize config"
+	ErrUnexpectedToken         = "unexpected token"
+	ErrDivisionByZero          = "division by zero"
+	ErrModuloByZero            = "modulo by zero"
+	ErrInvalidModulo           = "modulo operation requires integer operands"
+	ErrUnexpectedEndExpr       = "unexpected end of expression"
+	ErrMissingCloseParen       = "missing closing parenthesis"
+	ErrFailedProcessExpression = "Failed to process expression"
+	ErrFailedProcessResult     = "Failed to process result"
+	ErrFailedStartServer       = "Failed to start server"
+	ErrServerShutdownFailed    = "Server shutdown failed"
 )
 
 // Log messages used for logging application events.
 const (
-	LogProcessingExpression       = "Processing expression"
 	LogTaskRetrieved              = "Task retrieved"
 	LogExpressionRetrieved        = "Expression retrieved"
 	LogAgentStarted               = "Agent service started successfully"
@@ -49,7 +44,6 @@ const (
 	LogFailedUpdateStatusNotFound = "Failed to update expression status: expression not found"
 	LogListedAllExpressions       = "Listed all expressions"
 	LogFailedParseExpression      = "Failed to parse expression"
-	LogNoValidTasksCreated        = "No valid tasks created"
 )
 
 // HTTP headers and content types used in the application.
