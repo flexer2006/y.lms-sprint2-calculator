@@ -440,3 +440,10 @@ go test ./tests -run TestCalculator
   
 ## Схема  
 ![image](https://github.com/user-attachments/assets/82865f7b-b631-47d8-b17b-30ee90eff946)**
+
+## WEB
+
+WEB-интерфейс доступен при запуске приложения(примеры):
+1. http://localhost:8080/web/calculate
+2. http://localhost:8080/web/expressions
+3. http://localhost:8080/web/expressions/{id}
